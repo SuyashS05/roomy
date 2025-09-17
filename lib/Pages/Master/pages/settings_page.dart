@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:romy/Pages/Master/admin_profile_manager.dart';
+import 'package:romy/Pages/Master/pages/admin_profile_manager.dart';
 
 class SettingsPage extends StatelessWidget {
   final User user;
