@@ -1,4 +1,4 @@
-package com.example.romy
+package com.skimgworld.romy
 
 import io.flutter.embedding.android.FlutterActivity
 

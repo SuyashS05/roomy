@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:romy/Pages/ProfileSectionPages/InterestHobbiesPage.dart';
+import 'package:romy/Pages/pp/ProfileSectionPages/InterestHobbiesPage.dart';
 
 import 'RoommatePreferencePage.dart';
 class Personalinfopage extends StatefulWidget {

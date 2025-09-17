@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:romy/Pages/UIHelper.dart';
+import 'package:romy/Pages/pp/UIHelper.dart';
 import 'package:get/get.dart';
-import 'package:romy/main.dart';
+import 'package:romy/Pages/pp/main_page.dart';
 class Profilepage extends StatefulWidget {
   const Profilepage({super.key});
 

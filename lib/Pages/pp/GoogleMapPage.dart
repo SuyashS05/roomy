@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:get/get.dart';
-import 'package:romy/Pages/RoomInfoPageGoogle.dart';
+import 'package:romy/Pages/pp/RoomInfoPageGoogle.dart';
 class GoogleMapPage extends StatefulWidget {
   @override
   State<GoogleMapPage> createState() => _GoogleMapPageState();
