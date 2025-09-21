@@ -4,7 +4,7 @@ import 'package:another_flushbar/flushbar.dart';
 /// A reusable notification system using Flushbar.
 /// Supports message, title, type, icon, actions, progress bar, etc.
 class AppNotifier {
-  static void show(
+  static Future<void> show(
     BuildContext context, {
     required String message,
     String title = "",
@@ -16,76 +16,59 @@ class AppNotifier {
   }) {
     final config = _getConfig(type);
 
-    Flushbar(
-      // Title
-      titleText: title.isNotEmpty
-          ? Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: Colors.white,
-              ),
-            )
-          : null,
-
-      // Message
+    return Flushbar(
+      titleText:
+          title.isNotEmpty
+              ? Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+              )
+              : null,
       messageText: Text(
         message,
-        style: const TextStyle(
-          fontSize: 14,
-          color: Colors.white,
-        ),
+        style: const TextStyle(fontSize: 14, color: Colors.white),
       ),
-
       backgroundColor: config["color"] as Color,
-      icon: Icon(
-        config["icon"] as IconData,
-        color: Colors.white,
-        size: 28,
-      ),
-
+      icon: Icon(config["icon"] as IconData, color: Colors.white, size: 28),
       margin: const EdgeInsets.all(12),
       borderRadius: BorderRadius.circular(12),
       duration: duration,
       flushbarPosition: position,
-
       animationDuration: const Duration(milliseconds: 450),
       forwardAnimationCurve: Curves.easeOutBack,
       reverseAnimationCurve: Curves.easeIn,
-
       boxShadows: [
         BoxShadow(
           color: Colors.black.withOpacity(0.25),
           blurRadius: 6,
           spreadRadius: 2,
           offset: const Offset(0, 3),
-        )
+        ),
       ],
-
-      // Top progress bar for duration
       showProgressIndicator: true,
       progressIndicatorBackgroundColor: Colors.white24,
-      progressIndicatorValueColor: AlwaysStoppedAnimation<Color>(
+      progressIndicatorValueColor: const AlwaysStoppedAnimation<Color>(
         Colors.white,
       ),
-
-      // Optional action button
-      mainButton: (actionLabel != null && onAction != null)
-          ? TextButton(
-              onPressed: onAction,
-              child: Text(
-                actionLabel,
-                style: const TextStyle(color: Colors.white),
+      mainButton:
+          (actionLabel != null && onAction != null)
+              ? TextButton(
+                onPressed: onAction,
+                child: Text(
+                  actionLabel,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              )
+              : TextButton(
+                onPressed: () {},
+                child: const Icon(Icons.close, color: Colors.white),
               ),
-            )
-          : TextButton(
-              onPressed: () {}, // Close button
-              child: const Icon(Icons.close, color: Colors.white),
-            ),
-
-      maxWidth: 500, // prevents full-width on big screens
-    ).show(context);
+      maxWidth: 500,
+    ).show(context); // <--- returns Future
   }
 
   /// Helper for color + icon per type

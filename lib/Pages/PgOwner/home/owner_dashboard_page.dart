@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:romy/Pages/ListingsMap.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class OwnerDashboardPage extends StatelessWidget {
   final User user;
@@ -24,6 +26,75 @@ class OwnerDashboardPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // 🌍 Mini Map Container
+          GestureDetector(
+            onTap: () {
+              // Open full map page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ListingsMapPage(user: user),
+                ),
+              );
+            },
+            child: Stack(
+              children: [
+                Container(
+                  height: 180,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.grey[200],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: GoogleMap(
+                      initialCameraPosition: const CameraPosition(
+                        target: LatLng(20.5937, 78.9629), // default India center
+                        zoom: 5,
+                      ),
+                      markers: {}, // You can add a few markers here if you want
+                      zoomControlsEnabled: false,
+                      scrollGesturesEnabled: false,
+                      tiltGesturesEnabled: false,
+                      rotateGesturesEnabled: false,
+                      myLocationEnabled: false,
+                      liteModeEnabled: true, // lightweight preview map
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 12,
+                  top: 12,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.zoom_out_map),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ListingsMapPage(user: user),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
           // 📊 Summary Cards
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

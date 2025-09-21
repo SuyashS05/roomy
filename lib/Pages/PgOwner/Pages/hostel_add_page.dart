@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:romy/Helpers/Notifi_Snackbar.dart';
 
 class HostelAddPage extends StatefulWidget {
   final User owner;
@@ -342,11 +343,13 @@ class _HostelAddPageState extends State<HostelAddPage> {
   }
 
   void _addCot(int floorIndex, int roomIndex) {
+    final int basePrice =
+        int.tryParse(_basePriceController.text) ?? 0; // fallback if empty
     setState(() {
       floors[floorIndex]["rooms"][roomIndex]["cots"].add({
-        "pricePerMonth": 0,
+        "pricePerMonth": basePrice,
         "status": "available", // available, occupied, maintenance
-        "occupiedByUid": null, // if occupied, track userId
+        "occupiedByUid": null,
       });
     });
   }
@@ -526,21 +529,27 @@ class _HostelAddPageState extends State<HostelAddPage> {
       await hostelRef.set(hostelData, SetOptions(merge: true));
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
+        // Show notification and wait for it to dismiss
+        await AppNotifier.show(
+          context,
+          message:
               widget.editListingId != null
                   ? "Hostel updated!"
                   : "Hostel added!",
-            ),
-          ),
+          type: NotificationType.success,
         );
-        Navigator.pop(context);
+
+        // Navigate back after the notification disappears
+        if (mounted) Navigator.pop(context);
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error saving hostel: $e")));
+      if (mounted) {
+        AppNotifier.show(
+          context,
+          message: "Error saving hostel: $e",
+          type: NotificationType.error,
+        );
+      }
     } finally {
       setState(() => isSaving = false);
     }
