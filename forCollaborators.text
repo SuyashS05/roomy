@@ -1,0 +1,2 @@
+git branch --unset-upstream main
+git config branch.main.pushRemote no_push
