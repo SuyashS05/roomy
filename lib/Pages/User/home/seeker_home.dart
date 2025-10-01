@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:romy/Auth/profile_page.dart';
 import 'package:romy/provoiders/locale_provider.dart';
+import 'package:romy/provoiders/user_details_provider.dart';
 import 'package:romy/provoiders/user_provider.dart';
 
 import 'dashboard_page.dart';
@@ -45,7 +46,9 @@ class _SeekerHomeState extends State<SeekerHome> {
   @override
   Widget build(BuildContext context) {
     final userProvider = context.watch<UserProvider>();
-    final localeProvider = context.watch<LocaleProvider>(); // listen to locale
+    final localeProvider = context.watch<LocaleProvider>();
+    final userDetails =
+        context.watch<UserDetailsProvider>().user; // listen to locale
     final user = userProvider.firebaseUser ?? widget.user;
 
     return Scaffold(
@@ -76,12 +79,13 @@ class _SeekerHomeState extends State<SeekerHome> {
           padding: EdgeInsets.zero,
           children: [
             UserAccountsDrawerHeader(
-              accountName: Text(user.displayName ?? "guest_user".tr()),
-              accountEmail: Text(user.email ?? ""),
+              accountName: Text(userDetails?.displayName ?? "guest_user".tr()),
+              accountEmail: Text(userDetails?.email ?? ""),
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
                 child: Text(
-                  (user.email ?? "U")[0].toUpperCase(),
+                  (userDetails?.displayName?.substring(0, 1) ?? "U")
+                      .toUpperCase(),
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -89,6 +93,7 @@ class _SeekerHomeState extends State<SeekerHome> {
                 ),
               ),
             ),
+
             ListTile(
               leading: const Icon(Icons.dashboard),
               title: Text("dashboard".tr()),

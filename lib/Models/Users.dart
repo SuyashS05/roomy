@@ -113,7 +113,11 @@ class UserModel {
     double? lat,
     double? lng,
     bool? profileComplete,
+    bool? preferencesGiven,
     DateTime? updatedAt,
+    String? language,
+    String? theme,
+    String? deviceToken,
   }) {
     return UserModel(
       uid: uid,
@@ -130,6 +134,10 @@ class UserModel {
       lat: lat ?? this.lat,
       lng: lng ?? this.lng,
       profileComplete: profileComplete ?? this.profileComplete,
+      preferencesGiven: preferencesGiven ?? this.preferencesGiven,
+      deviceToken: deviceToken ?? this.deviceToken,
+      userId: userId, // 🔹 never overwrite
+      createdAt: createdAt, // 🔹 never overwrite
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }

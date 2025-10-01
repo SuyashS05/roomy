@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:romy/Helpers/device_token_helper.dart';
 import 'package:romy/firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -78,6 +79,10 @@ class Root extends StatelessWidget {
 
     // 🔹 Start listening to Firestore for user details
     userDetailsProvider.listenToUser(user);
+
+    // ✅ Ensure device token is set if null
+    DeviceTokenHelper.ensureDeviceToken();
+    DeviceTokenHelper.listenToTokenRefresh(); // optional, keeps token updated
 
     return const SplashScreen(); // Splash handles role + navigation
   }

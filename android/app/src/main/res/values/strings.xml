@@ -1,0 +1,7 @@
+<resources>
+    <!-- Your existing strings -->
+    <string name="app_name">romy</string>
+
+    <!-- Add this -->
+    <string name="google_maps_key">${MAPS_API_KEY}</string>
+</resources>

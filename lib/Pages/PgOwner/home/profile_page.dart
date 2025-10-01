@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:romy/Auth/profile_page.dart';
 import 'package:romy/Helpers/LogOut_confim.dart';
 import 'package:romy/Helpers/Notifi_Snackbar.dart';
 import 'package:romy/Pages/PgOwner/Pages/ProfileVerificationPage.dart';
+import 'package:romy/provoiders/user_details_provider.dart';
 
 class OnerProfilePage extends StatelessWidget {
   final User user;
@@ -238,6 +240,7 @@ class OnerProfilePage extends StatelessWidget {
                     );
                     if (confirmed == true) {
                       await FirebaseAuth.instance.signOut();
+                      context.read<UserDetailsProvider>().clearUser();
                       if (context.mounted) {
                         Navigator.of(context).pushReplacementNamed("/login");
                       }
