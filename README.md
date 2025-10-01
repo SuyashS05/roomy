@@ -131,9 +131,12 @@ Please ensure your code adheres to the project's coding standards and includes a
 
 ## 🧑‍💻 Contributors
 
-* **Farah Ait Elahmadi** – *Lead Developer*
+* **Suyash S Kotkar** – *Lead Developer*
 
-* **Rachid Bourigue** – *UI/UX Designer*
+<!-- * **Suyash Kotkar** – *UI/UX Designer* -->
+* **Prathmesh P** – *Lead Developer*
+
+* **Sahil P** – *Lead Developer*
 
 ---
 
