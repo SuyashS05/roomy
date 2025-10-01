@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:romy/Pages/ListingsMap.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:romy/Pages/MapPreviewCard.dart';
 
 class OwnerDashboardPage extends StatelessWidget {
   final User user;
@@ -27,80 +27,17 @@ class OwnerDashboardPage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           // 🌍 Mini Map Container
-          GestureDetector(
-            onTap: () {
-              // Open full map page
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ListingsMapPage(user: user),
-                ),
-              );
-            },
-            child: Stack(
-              children: [
-                Container(
-                  height: 180,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.grey[200],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: GoogleMap(
-                      initialCameraPosition: const CameraPosition(
-                        target: LatLng(20.5937, 78.9629), // default India center
-                        zoom: 5,
-                      ),
-                      markers: {}, // You can add a few markers here if you want
-                      zoomControlsEnabled: false,
-                      scrollGesturesEnabled: false,
-                      tiltGesturesEnabled: false,
-                      rotateGesturesEnabled: false,
-                      myLocationEnabled: false,
-                      liteModeEnabled: true, // lightweight preview map
-                    ),
-                  ),
-                ),
-                Positioned(
-                  right: 12,
-                  top: 12,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.zoom_out_map),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ListingsMapPage(user: user),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const MapPreviewCard(),
 
           const SizedBox(height: 20),
 
           // 📊 Summary Cards
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildSummaryCard(Icons.home, "Total Listings", "12", Colors.blue),
+              const SizedBox(width: 8),
               _buildSummaryCard(Icons.bookmark, "Booked Rooms", "7", Colors.green),
+              const SizedBox(width: 8),
               _buildSummaryCard(Icons.pending_actions, "Pending", "5", Colors.orange),
             ],
           ),
@@ -118,9 +55,12 @@ class OwnerDashboardPage extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          _buildListingCard("1BHK Apartment", "₹8000/month", "City Center • WiFi", "https://picsum.photos/210"),
-          _buildListingCard("Shared PG", "₹4000/month", "Near College • Meals Included", "https://picsum.photos/211"),
-          _buildListingCard("Luxury Flat", "₹20000/month", "3BHK • Furnished", "https://picsum.photos/212"),
+          _buildListingCard(
+              "1BHK Apartment", "₹8000/month", "City Center • WiFi", "https://picsum.photos/210"),
+          _buildListingCard(
+              "Shared PG", "₹4000/month", "Near College • Meals Included", "https://picsum.photos/211"),
+          _buildListingCard(
+              "Luxury Flat", "₹20000/month", "3BHK • Furnished", "https://picsum.photos/212"),
 
           const SizedBox(height: 20),
 
@@ -149,7 +89,6 @@ class OwnerDashboardPage extends StatelessWidget {
       IconData icon, String title, String value, Color color) {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
@@ -159,11 +98,13 @@ class OwnerDashboardPage extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 28),
             const SizedBox(height: 8),
-            Text(value,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 4),
-            Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(title,
+                style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
       ),
@@ -198,8 +139,12 @@ class OwnerDashboardPage extends StatelessWidget {
           ClipRRect(
             borderRadius:
                 const BorderRadius.horizontal(left: Radius.circular(16)),
-            child: Image.network(imageUrl,
-                width: 100, height: 100, fit: BoxFit.cover),
+            child: Image.network(
+              imageUrl,
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+            ),
           ),
           Expanded(
             child: Padding(
@@ -212,7 +157,8 @@ class OwnerDashboardPage extends StatelessWidget {
                           fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Text(price,
-                      style: const TextStyle(fontSize: 14, color: Colors.green)),
+                      style: const TextStyle(
+                          fontSize: 14, color: Colors.green)),
                   const SizedBox(height: 4),
                   Text(details,
                       style:
@@ -242,8 +188,10 @@ class OwnerDashboardPage extends StatelessWidget {
         children: [
           Icon(icon, size: 28, color: color),
           const SizedBox(height: 8),
-          Text(label,
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+          ),
         ],
       ),
     );

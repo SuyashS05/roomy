@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:romy/Auth/profile_page.dart';
+import 'package:romy/Pages/ListingsMap.dart';
 import 'package:romy/Pages/pp/GoogleMapPage.dart';
 import 'package:romy/Pages/pp/RoomateDetailedPage.dart';
 
@@ -11,30 +11,6 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Roomy Dashboard"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("No new notifications")),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProfilePage(uid: user.uid),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -76,7 +52,12 @@ class DashboardPage extends StatelessWidget {
               childAspectRatio: 1.2,
               children: [
                 _buildActionCard(Icons.search, "Find Rooms", Colors.blue),
-                _buildActionCard(Icons.map, "Nearby", Colors.green),
+                _buildActionCard(Icons.map, "Nearby", Colors.green, onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => ListingsMap()),
+                  );
+                }),
                 _buildActionCard(Icons.chat, "Messages", Colors.orange),
                 _buildActionCard(Icons.support_agent, "Support", Colors.red),
               ],
@@ -141,12 +122,12 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildActionCard(IconData icon, String title, Color color) {
+  Widget _buildActionCard(IconData icon, String title, Color color, {VoidCallback? onTap}) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 4,
       child: InkWell(
-        onTap: () {},
+        onTap: onTap ?? () {},
         borderRadius: BorderRadius.circular(16),
         child: Center(
           child: Column(

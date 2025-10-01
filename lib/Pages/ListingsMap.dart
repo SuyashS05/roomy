@@ -1,145 +1,492 @@
+/*
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:romy/Helpers/Notifi_Snackbar.dart';
-import 'package:romy/Pages/PgOwner/Pages/HostelDetails.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:romy/Pages/PgOwner/Pages/HostelDetailsPage.dart';
 
-class ListingsMapPage extends StatefulWidget {
-  final User user;
-  const ListingsMapPage({super.key, required this.user});
+class ListingsMap extends StatefulWidget {
+  const ListingsMap({Key? key}) : super(key: key);
 
   @override
-  State<ListingsMapPage> createState() => _ListingsMapPageState();
+  State<ListingsMap> createState() => _ListingsMapState();
 }
 
-class _ListingsMapPageState extends State<ListingsMapPage> {
-  GoogleMapController? _mapController;
-  final TextEditingController _searchController = TextEditingController();
-  final Set<Marker> _markers = {};
-  BitmapDescriptor? _listingIcon;
+class _ListingsMapState extends State<ListingsMap> {
+  final Completer<GoogleMapController> _controller = Completer();
+  LatLng? _center;
+  double _radiusKm = 1;
+  Set<Marker> _markers = {};
+  Set<Circle> _circles = {};
 
   @override
   void initState() {
     super.initState();
-    _loadListings();
-    _createMarkerIcon();
+    _getUserLocation();
   }
 
-  Future<void> _createMarkerIcon() async {
-    _listingIcon = await BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(size: Size(48, 48)),
-      'assets/icons/marker.png', // Provide your custom icon
-    );
+  Future<void> _getUserLocation() async {
+    final perm = await Geolocator.requestPermission();
+    if (perm == LocationPermission.denied ||
+        perm == LocationPermission.deniedForever) return;
+
+    final pos = await Geolocator.getCurrentPosition();
+    setState(() => _center = LatLng(pos.latitude, pos.longitude));
+    _fetchListings();
   }
 
-  Future<void> _loadListings() async {
-    final snapshot = await FirebaseFirestore.instance.collection("listings").get();
-    Set<Marker> markers = {};
-    for (var doc in snapshot.docs) {
+  Future<void> _fetchListings() async {
+    if (_center == null) return;
+    final docs =
+        await FirebaseFirestore.instance.collection('listings').get();
+
+    final km2m = 1000 * _radiusKm;
+    final markers = <Marker>{};
+
+    for (var doc in docs.docs) {
       final data = doc.data();
-      if (data['location'] != null) {
-        final lat = data['location']['lat'] as double?;
-        final lng = data['location']['lng'] as double?;
-        if (lat != null && lng != null) {
-          markers.add(Marker(
-            markerId: MarkerId(doc.id),
-            position: LatLng(lat, lng),
-            icon: _listingIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-            infoWindow: InfoWindow(
-              title: data['title'] ?? "Untitled",
-              snippet: "₹${data['basePrice'] ?? 0}/month • Rating: ${data['rating'] ?? 0}",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => HostelDetailsPage(listingId: doc.id, user: widget.user.uid)),
-                );
-              },
-            ),
-          ));
-        }
+      final lat = data['location']?['lat'];
+      final lng = data['location']?['lng'];
+      if (lat == null || lng == null) continue;
+
+      final d = Geolocator.distanceBetween(
+          _center!.latitude, _center!.longitude, lat, lng);
+
+      if (d <= km2m) {
+        final available = (data['status'] ?? 'available') == 'available';
+        final markerColor = available
+            ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen)
+            : BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
+
+        markers.add(Marker(
+          markerId: MarkerId(doc.id),
+          position: LatLng(lat, lng),
+          icon: markerColor,
+          infoWindow: InfoWindow(
+            title: data['title'],
+            snippet: "₹${data['basePrice'] ?? ''}/month",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => HostelDetailsPage(listingId: doc.id),
+                ),
+              );
+            },
+          ),
+        ));
       }
     }
 
     setState(() {
-      _markers.addAll(markers);
+      _markers = markers;
+      _circles = {
+        Circle(
+          circleId: const CircleId("radius"),
+          center: _center!,
+          radius: km2m,
+          fillColor: Colors.red.withOpacity(0.1),
+          strokeColor: Colors.redAccent,
+          strokeWidth: 2,
+        )
+      };
     });
   }
 
-  Future<void> _searchLocation() async {
-    final query = _searchController.text;
-    if (query.isEmpty) return;
-
-    try {
-      final locations = await locationFromAddress(query);
-      if (locations.isNotEmpty) {
-        final location = locations.first;
-        _mapController?.animateCamera(CameraUpdate.newLatLngZoom(
-          LatLng(location.latitude, location.longitude),
-          14,
-        ));
-      } else {
-        AppNotifier.show(context, message: "Location not found", type: NotificationType.error);
-      }
-    } catch (e) {
-      AppNotifier.show(context, message: "Error: $e", type: NotificationType.error);
-    }
-  }
-
-  void _saveListing(String listingId) {
-    // Implement your save/bookmark logic here
-    AppNotifier.show(context, message: "Saved listing $listingId", type: NotificationType.success);
+  Future<void> _updateRadius(double newRadius) async {
+    setState(() => _radiusKm = newRadius);
+    _fetchListings();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_center == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Listings Map"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.my_location),
-            onPressed: () {
-              _mapController?.animateCamera(CameraUpdate.zoomTo(14));
+        title: const Text("Nearby Hostels"),
+      ),
+      body: Stack(
+        children: [
+          GoogleMap(
+            initialCameraPosition:
+                CameraPosition(target: _center!, zoom: 15),
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
+            onMapCreated: (c) => _controller.complete(c),
+            markers: _markers,
+            circles: _circles,
+            onTap: (pos) {
+              // Change center to tapped location
+              setState(() => _center = pos);
+              _fetchListings();
             },
+          ),
+          // Radius Control Panel
+          Positioned(
+            top: 16,
+            right: 10,
+            child: Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: [
+                    const Text("Radius: "),
+                    DropdownButton<double>(
+                      value: _radiusKm,
+                      underline: const SizedBox(),
+                      items: [1, 2, 3, 4, 5]
+                          .map((e) => DropdownMenuItem(
+                                value: e.toDouble(),
+                                child: Text("${e} km"),
+                              ))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) _updateRadius(val);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      body: Column(
+    );
+  }
+}
+*/
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:romy/Pages/PgOwner/Pages/HostelDetailsPage.dart';
+
+class ListingsMap extends StatefulWidget {
+  const ListingsMap({Key? key}) : super(key: key);
+
+  @override
+  State<ListingsMap> createState() => _ListingsMapState();
+}
+
+class _ListingsMapState extends State<ListingsMap> {
+  final Completer<GoogleMapController> _controller = Completer();
+  LatLng? _center;
+  double _radiusKm = 1;
+  Set<Marker> _markers = {};
+  Set<Circle> _circles = {};
+  List<Map<String, dynamic>> _visibleListings = [];
+  MapType _currentMapType = MapType.normal;
+
+  @override
+  void initState() {
+    super.initState();
+    _initLocation();
+  }
+
+  Future<void> _initLocation() async {
+    final perm = await Geolocator.requestPermission();
+    if (perm == LocationPermission.denied ||
+        perm == LocationPermission.deniedForever) return;
+
+    final pos = await Geolocator.getCurrentPosition();
+    setState(() => _center = LatLng(pos.latitude, pos.longitude));
+    _fetchListings();
+  }
+
+  Future<void> _fetchListings() async {
+    if (_center == null) return;
+    final docs = await FirebaseFirestore.instance.collection('listings').get();
+
+    final km2m = 1000 * _radiusKm;
+    final markers = <Marker>{};
+    final visible = <Map<String, dynamic>>[];
+
+    for (var doc in docs.docs) {
+      final data = doc.data();
+      final lat = data['location']?['lat'];
+      final lng = data['location']?['lng'];
+      if (lat == null || lng == null) continue;
+
+      final d = Geolocator.distanceBetween(
+        _center!.latitude,
+        _center!.longitude,
+        lat,
+        lng,
+      );
+
+      if (d <= km2m) {
+        final available = (data['status'] ?? 'available') == 'available';
+        final hue =
+            available ? BitmapDescriptor.hueGreen : BitmapDescriptor.hueBlue;
+
+        markers.add(Marker(
+          markerId: MarkerId(doc.id),
+          position: LatLng(lat, lng),
+          icon: BitmapDescriptor.defaultMarkerWithHue(hue),
+          infoWindow: InfoWindow(
+            title: data['title'] ?? '',
+            snippet: "₹${data['basePrice'] ?? ''}/month",
+            onTap: () => _openDetails(doc.id),
+          ),
+          onTap: () => _highlightListing(doc.id),
+        ));
+
+        visible.add({
+          'id': doc.id,
+          'title': data['title'] ?? '',
+          'price': data['basePrice'] ?? '',
+          'available': available,
+          'lat': lat,
+          'lng': lng,
+        });
+      }
+    }
+
+    setState(() {
+      _markers = markers;
+      _visibleListings = visible;
+      _circles = {
+        Circle(
+          circleId: const CircleId("radius"),
+          center: _center!,
+          radius: km2m,
+          fillColor: Colors.red.withOpacity(0.12),
+          strokeColor: Colors.redAccent,
+          strokeWidth: 2,
+        )
+      };
+    });
+  }
+
+  void _openDetails(String id) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => HostelDetailsPage(listingId: id)),
+    );
+  }
+
+  Future<void> _highlightListing(String id) async {
+    final listing =
+        _visibleListings.firstWhere((element) => element['id'] == id);
+    final controller = await _controller.future;
+    controller.animateCamera(
+      CameraUpdate.newLatLngZoom(LatLng(listing['lat'], listing['lng']), 17),
+    );
+  }
+
+  Future<void> _updateRadius(double val) async {
+    setState(() => _radiusKm = val);
+    _fetchListings();
+  }
+
+  void _setMapType(MapType type) {
+    setState(() => _currentMapType = type);
+    Navigator.pop(context);
+  }
+
+  Widget _buildMapTypeSheet() {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Search Box
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      hintText: "Search city or address",
-                      border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.search),
-                    ),
-                  ),
+          ListTile(
+            leading: const Icon(Icons.map),
+            title: const Text('Normal'),
+            onTap: () => _setMapType(MapType.normal),
+          ),
+          ListTile(
+            leading: const Icon(Icons.satellite),
+            title: const Text('Satellite'),
+            onTap: () => _setMapType(MapType.satellite),
+          ),
+          ListTile(
+            leading: const Icon(Icons.terrain),
+            title: const Text('Terrain'),
+            onTap: () => _setMapType(MapType.terrain),
+          ),
+          ListTile(
+            leading: const Icon(Icons.layers),
+            title: const Text('Hybrid'),
+            onTap: () => _setMapType(MapType.hybrid),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRadiusControl(BuildContext context) {
+    return Card(
+      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.9),
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          children: [
+            const Text(
+              "Search Radius",
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Slider(
+              value: _radiusKm,
+              min: 1,
+              max: 5,
+              divisions: 4,
+              label: "${_radiusKm.toStringAsFixed(0)} km",
+              activeColor: Colors.redAccent,
+              onChanged: (val) => _updateRadius(val),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListingsOverlay(BuildContext context) {
+    if (_visibleListings.isEmpty) return const SizedBox();
+    return Card(
+      color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.9),
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: SizedBox(
+        height: 120,
+        child: ListView.separated(
+          padding: const EdgeInsets.all(8),
+          scrollDirection: Axis.horizontal,
+          itemCount: _visibleListings.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (context, i) {
+            final l = _visibleListings[i];
+            return GestureDetector(
+              onTap: () => _highlightListing(l['id']),
+              child: Container(
+                width: 180,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: l['available']
+                      ? Colors.greenAccent.withOpacity(0.85)
+                      : Colors.blueAccent.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: _searchLocation,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l['title'],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16)),
+                    const Spacer(),
+                    Text("₹${l['price']}/month",
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 14)),
+                  ],
                 ),
-              ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_center == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        title: const Text(
+          "Discover Nearby Hostels",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        elevation: 0,
+      ),
+      body: Stack(
+        children: [
+          GoogleMap(
+            initialCameraPosition: CameraPosition(target: _center!, zoom: 14),
+            mapType: _currentMapType,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            compassEnabled: true,
+            zoomGesturesEnabled: true,
+            onMapCreated: (c) => _controller.complete(c),
+            markers: _markers,
+            circles: _circles,
+            onTap: (pos) {
+              setState(() => _center = pos);
+              _fetchListings();
+            },
+          ),
+
+          // Radius slider bottom sheet
+          Positioned(
+            bottom: 20,
+            left: 16,
+            right: 16,
+            child: _buildRadiusControl(context),
+          ),
+
+          // Visible listings overlay (collapsible)
+          Positioned(
+            top: 80,
+            left: 16,
+            right: 16,
+            child: _buildListingsOverlay(context),
+          ),
+
+          // Recenter button
+          Positioned(
+            bottom: 90,
+            right: 16,
+            child: FloatingActionButton(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              onPressed: () async {
+                final controller = await _controller.future;
+                controller.animateCamera(
+                  CameraUpdate.newLatLngZoom(_center!, 14),
+                );
+              },
+              child: const Icon(Icons.my_location),
             ),
           ),
-          Expanded(
-            child: GoogleMap(
-              initialCameraPosition: const CameraPosition(
-                target: LatLng(20.5937, 78.9629), // India center by default
-                zoom: 5,
-              ),
-              markers: _markers,
-              myLocationEnabled: true,
-              zoomControlsEnabled: true,
-              onMapCreated: (controller) => _mapController = controller,
+
+          // Map layers button
+          Positioned(
+            top: 90,
+            right: 16,
+            child: FloatingActionButton(
+              heroTag: "layersBtn",
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              child: const Icon(Icons.layers),
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(20))),
+                  builder: (ctx) => _buildMapTypeSheet(),
+                );
+              },
             ),
           ),
         ],

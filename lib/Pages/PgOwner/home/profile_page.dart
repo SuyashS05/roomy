@@ -79,7 +79,7 @@ class OnerProfilePage extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => ProfilePage(uid: user.uid),
+                                  builder: (_) => ProfilePage(),
                                 ),
                               );
                             },

@@ -18,7 +18,7 @@ class AdminDashboardPage extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => ProfilePage(uid: user.uid)),
+                MaterialPageRoute(builder: (_) => ProfilePage()),
               );
             },
           ),
