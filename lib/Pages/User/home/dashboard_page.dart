@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:romy/Pages/ListingsMap.dart';
-import 'package:romy/Pages/pp/GoogleMapPage.dart';
-import 'package:romy/Pages/pp/RoomateDetailedPage.dart';
+import 'package:romy/Pages/pp/GoogleMap.dart';
 
 class DashboardPage extends StatelessWidget {
   final User user;
@@ -24,7 +23,7 @@ class DashboardPage extends StatelessWidget {
                   "assets/img/ViewRoom.png",
                   () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => GoogleMapPage()),
+                    MaterialPageRoute(builder: (_) => MapSample()),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -35,7 +34,7 @@ class DashboardPage extends StatelessWidget {
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const Roomatedetailedpage(),
+                      builder: (_) =>  MapSample(),
                     ),
                   ),
                 ),

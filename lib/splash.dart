@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:romy/pages/home_role_router.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -16,11 +17,22 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
+  final List<Color> _colors = [
+    Colors.red,
+    Colors.orange,
+    Colors.yellow,
+    Colors.green,
+    Colors.blue,
+    Colors.indigo,
+    Colors.purple,
+  ];
+  int _currentIndex = 0;
+
   @override
   void initState() {
     super.initState();
 
-    // Animation setup
+    // Icon animation
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -34,13 +46,19 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
+    // Gradient change every 0.5s
+    Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      setState(() {
+        _currentIndex = (_currentIndex + 1) % _colors.length;
+      });
+    });
+
     // Navigate after delay
     Timer(const Duration(seconds: 4), _navigate);
   }
 
   void _navigate() {
     final user = FirebaseAuth.instance.currentUser;
-
     if (user == null) {
       Navigator.pushReplacementNamed(context, "/login");
     } else {
@@ -59,11 +77,14 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final nextIndex = (_currentIndex + 1) % _colors.length;
+
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
+      body: AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF2196F3), Color(0xFF21CBF3)],
+            colors: [_colors[_currentIndex], _colors[nextIndex]],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -83,8 +104,8 @@ class _SplashScreenState extends State<SplashScreen>
                       borderRadius: BorderRadius.circular(100),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 20,
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 25,
                           spreadRadius: 5,
                         ),
                       ],
@@ -98,23 +119,38 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                "Roomy",
+              Text(
+                "Roomy".tr(), // ✅ localized app name
                 style: TextStyle(
-                  fontSize: 40,
+                  fontSize: 42,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                   letterSpacing: 2,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 10,
+                      color: Colors.black.withOpacity(0.3),
+                      offset: const Offset(2, 2),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                "Find your perfect space effortlessly",
+              Text(
+                "find_your_space".tr(), // ✅ localized tagline
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.white70,
+                  color: Colors.white.withOpacity(0.9),
                   fontStyle: FontStyle.italic,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 6,
+                      color: Colors.black.withOpacity(0.25),
+                      offset: const Offset(1, 1),
+                    ),
+                  ],
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
