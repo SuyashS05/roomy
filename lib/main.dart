@@ -26,7 +26,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider(create: (_) => LocaleProvider()),
           ChangeNotifierProvider(create: (_) => UserDetailsProvider()),
-          ChangeNotifierProvider(create: (_) => UserProvider()..loadUser()),
+          ChangeNotifierProvider(create: (_) => UserProvider()),
         ],
         child: const RoomyApp(),
       ),
