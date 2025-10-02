@@ -32,7 +32,7 @@ class HomeRoleRouter extends StatelessWidget {
     // 3️⃣ Route based on role safely
     switch (role) {
       case "user":
-        return SeekerHome(user: user);
+        return SeekerHome();
       case "roomOwner":
         return OwnerHome(user: user);
       case "admin":

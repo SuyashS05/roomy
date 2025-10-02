@@ -63,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _navigate() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    if (user == null || !user.emailVerified) {
       Navigator.pushReplacementNamed(context, "/login");
     } else {
       // 🔹 tell UserDetailsProvider to listen again

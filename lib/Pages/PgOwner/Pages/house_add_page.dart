@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:romy/Helpers/LocationHelper.dart';
 import 'package:romy/Helpers/Notifi_Snackbar.dart';
 import 'package:romy/Pages/locationpiker.dart';
 
@@ -177,36 +178,16 @@ class _HomeAddPageState extends State<HomeAddPage> {
     }
   }
 
-  // Future<void> _pickLocation() async {
-  //   final selected = await Navigator.push<LatLng>(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (_) => LocationPicker(initialLocation: _selectedLocation),
-  //     ),
-  //   );
+  Future<void> _pickLocationOnMap() async {
+    final picked = await LocationHelper.pickOnMap(context);
+    if (picked != null) {
+      setState(() {
+        _selectedLocation = LatLng(picked["lat"], picked["lng"]);
+        _addressController.text = picked["address"];
+      });
+    }
+  }
 
-  //   if (selected != null) {
-  //     setState(() => _selectedLocation = selected);
-
-  //     // Optional: Reverse geocode to fill city/state/pincode/address
-  //     try {
-  //       final placemarks = await placemarkFromCoordinates(
-  //         selected.latitude,
-  //         selected.longitude,
-  //       );
-  //       if (placemarks.isNotEmpty) {
-  //         final place = placemarks.first;
-  //         _cityController.text = place.locality ?? "";
-  //         _stateController.text = place.administrativeArea ?? "";
-  //         _pincodeController.text = place.postalCode ?? "";
-  //         _addressController.text =
-  //             "${place.street}, ${place.subLocality}, ${place.locality}";
-  //       }
-  //     } catch (e) {
-  //       debugPrint("Error reverse geocoding: $e");
-  //     }
-  //   }
-  // }
 
   Future<void> _pickImages() async {
     final pickedFiles = await _picker.pickMultiImage();
@@ -517,6 +498,11 @@ class _HomeAddPageState extends State<HomeAddPage> {
                         IconButton(
                           icon: const Icon(Icons.location_on),
                           onPressed: _pickLocation,
+                        ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.map),
+                          label: const Text("Pick on Map"),
+                          onPressed: _pickLocationOnMap,
                         ),
                       ],
                     ),

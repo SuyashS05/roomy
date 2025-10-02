@@ -4,114 +4,147 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapSample extends StatefulWidget {
+  final LatLng? initialLocation;
+
+  const MapSample({super.key, this.initialLocation});
+
   @override
   State<MapSample> createState() => MapSampleState();
 }
 
 class MapSampleState extends State<MapSample> {
   final Completer<GoogleMapController> _controller = Completer();
+  LatLng? _currentPosition;
+  final Set<Marker> _markers = {};
+  final Set<Circle> _circles = {};
 
-  static final CameraPosition _initialPosition = CameraPosition(
-    target:  LatLng(16.7087, 74.2795),
-    zoom: 14.4746,
-    bearing: 45, // <-- KEY: Rotate to trigger compass
+  static const CameraPosition _defaultPosition = CameraPosition(
+    target: LatLng(16.7087, 74.2795),
+    zoom: 14.0,
   );
-
-  final List<Marker> _markers = [
-    Marker(
-      markerId: MarkerId("1"),
-      position:  LatLng(16.7087, 74.2795),
-      infoWindow: InfoWindow(title: "My Location"),
-    ),
-  ];
-
-
-  Future<Position> getUserCurrentLocation()async{
-    await Geolocator.requestPermission().then((onValue){
-
-    }).onError((error, stackTrace) {
-      print(error.toString());
-    },);
-    return await Geolocator.getCurrentPosition();
-  }
-
-
-  loadData(){
-    getUserCurrentLocation().then((value)async{
-      setState(() {
-
-      });
-      _markers.add(
-        Marker(markerId: MarkerId("3"),
-            position: LatLng(value.latitude,value.longitude),
-            infoWindow: InfoWindow(
-                title: "Current Location"
-            )
-        ),
-      );
-
-      CameraPosition cameraposition=CameraPosition(
-          target: LatLng(value.latitude, value.longitude),
-          zoom: 15
-      );
-
-      final GoogleMapController controller=await _controller.future;
-      controller.animateCamera(CameraUpdate.newCameraPosition(cameraposition));
-      //  print(value.latitude.toString()+" "+value.longitude.toString());
-    });
-  }
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    loadData();
+    _initLocation();
   }
 
+  Future<void> _initLocation() async {
+    LatLng position;
+
+    if (widget.initialLocation != null) {
+      position = widget.initialLocation!;
+    } else {
+      Position userPosition = await _determinePosition();
+      position = LatLng(userPosition.latitude, userPosition.longitude);
+    }
+
+    setState(() {
+      _currentPosition = position;
+
+      _markers.add(
+        Marker(
+          markerId: const MarkerId("user_location"),
+          position: _currentPosition!,
+          infoWindow: const InfoWindow(title: "You are here"),
+        ),
+      );
+
+      _circles.add(
+        Circle(
+          circleId: const CircleId("user_radius"),
+          center: _currentPosition!,
+          radius: 1000, // 1 km
+          fillColor: Colors.orange.withOpacity(0.2),
+          strokeColor: Colors.orange.withOpacity(0.5),
+          strokeWidth: 2,
+        ),
+      );
+    });
+
+    final GoogleMapController controller = await _controller.future;
+    controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: _currentPosition!, zoom: 15),
+      ),
+    );
+  }
+
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw Exception("Location services are disabled.");
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        throw Exception("Location permission denied");
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception("Location permissions are permanently denied.");
+    }
+
+    return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Google Map Compass Test")),
-      body: SafeArea(
-        child: GoogleMap(
-          initialCameraPosition: _initialPosition,
-          markers: Set<Marker>.of(_markers),
-          mapType: MapType.normal,
-          myLocationButtonEnabled: true,
-          compassEnabled: true,
-          rotateGesturesEnabled: true,
-          tiltGesturesEnabled: true,
-          onMapCreated: (GoogleMapController controller) {
-            _controller.complete(controller);
-          },
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(onPressed: ()async{
-        getUserCurrentLocation().then((value)async{
-          setState(() {
-
-          });
-          _markers.add(
-            Marker(markerId: MarkerId("3"),
-                position: LatLng(value.latitude,value.longitude),
-                infoWindow: InfoWindow(
-                    title: "Current Location"
-                )
+      appBar: AppBar(title: const Text("Map View")),
+      body: _currentPosition == null
+          ? const Center(child: CircularProgressIndicator())
+          : GoogleMap(
+              initialCameraPosition:
+                  widget.initialLocation != null ? CameraPosition(target: widget.initialLocation!, zoom: 15) : _defaultPosition,
+              markers: _markers,
+              circles: _circles,
+              mapType: MapType.normal,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: true,
+              compassEnabled: true,
+              tiltGesturesEnabled: true,
+              rotateGesturesEnabled: true,
+              onMapCreated: (GoogleMapController controller) {
+                _controller.complete(controller);
+              },
             ),
-          );
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          // Move camera to current location
+          Position pos = await _determinePosition();
+          LatLng newPos = LatLng(pos.latitude, pos.longitude);
 
-          CameraPosition cameraposition=CameraPosition(
-              target: LatLng(value.latitude, value.longitude),
-              zoom: 15
-          );
+          setState(() {
+            _markers.clear();
+            _markers.add(Marker(
+              markerId: const MarkerId("user_location"),
+              position: newPos,
+              infoWindow: const InfoWindow(title: "You are here"),
+            ));
 
-          final GoogleMapController controller=await _controller.future;
-          controller.animateCamera(CameraUpdate.newCameraPosition(cameraposition));
-          //  print(value.latitude.toString()+" "+value.longitude.toString());
-        });
-      },
-        child: Icon(Icons.location_disabled_outlined),
+            _circles.clear();
+            _circles.add(Circle(
+              circleId: const CircleId("user_radius"),
+              center: newPos,
+              radius: 1000,
+              fillColor: Colors.orange.withOpacity(0.2),
+              strokeColor: Colors.orange.withOpacity(0.5),
+              strokeWidth: 2,
+            ));
+          });
+
+          final GoogleMapController controller = await _controller.future;
+          controller.animateCamera(CameraUpdate.newCameraPosition(
+              CameraPosition(target: newPos, zoom: 15)));
+        },
+        child: const Icon(Icons.my_location),
       ),
     );
   }

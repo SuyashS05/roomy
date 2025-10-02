@@ -13,8 +13,7 @@ import 'seeker_profile_page.dart';
 import '../settings_page.dart';
 
 class SeekerHome extends StatefulWidget {
-  final User user;
-  const SeekerHome({super.key, required this.user});
+  const SeekerHome({super.key});
 
   @override
   State<SeekerHome> createState() => _SeekerHomeState();
@@ -22,13 +21,17 @@ class SeekerHome extends StatefulWidget {
 
 class _SeekerHomeState extends State<SeekerHome> {
   int _index = 0;
-  late final List<Widget> pages;
+  late List<Widget> pages;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userDetails =
+        context.watch<UserDetailsProvider>().user; // ✅ get Firestore user
+
+    // Initialize pages once userDetails is available
     pages = [
-      DashboardPage(user: widget.user),
+      if (userDetails != null) DashboardPage(user: userDetails),
       const SavedPage(),
       const SeekerProfilePage(),
     ];
@@ -45,11 +48,15 @@ class _SeekerHomeState extends State<SeekerHome> {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = context.watch<UserProvider>();
     final localeProvider = context.watch<LocaleProvider>();
-    final userDetails =
-        context.watch<UserDetailsProvider>().user; // listen to locale
-    final user = userProvider.firebaseUser ?? widget.user;
+    final userDetails = context.watch<UserDetailsProvider>().user;
+
+    if (userDetails == null) {
+      // Show loading until userDetails is fetched
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -79,12 +86,13 @@ class _SeekerHomeState extends State<SeekerHome> {
           padding: EdgeInsets.zero,
           children: [
             UserAccountsDrawerHeader(
-              accountName: Text(userDetails?.displayName ?? "guest_user".tr()),
-              accountEmail: Text(userDetails?.email ?? ""),
+              accountName:
+                  Text(userDetails.displayName ?? "guest_user".tr()),
+              accountEmail: Text(userDetails.email ?? ""),
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
                 child: Text(
-                  (userDetails?.displayName?.substring(0, 1) ?? "U")
+                  (userDetails.displayName?.substring(0, 1) ?? "U")
                       .toUpperCase(),
                   style: const TextStyle(
                     fontSize: 24,
@@ -93,7 +101,6 @@ class _SeekerHomeState extends State<SeekerHome> {
                 ),
               ),
             ),
-
             ListTile(
               leading: const Icon(Icons.dashboard),
               title: Text("dashboard".tr()),

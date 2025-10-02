@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:romy/Helpers/LocationHelper.dart';
 import 'package:romy/Helpers/Notifi_Snackbar.dart';
 
 class HostelAddPage extends StatefulWidget {
@@ -189,6 +190,16 @@ class _HostelAddPageState extends State<HostelAddPage> {
       }
     } catch (e) {
       debugPrint("Error picking location: $e");
+    }
+  }
+
+  Future<void> _pickLocationOnMap() async {
+    final picked = await LocationHelper.pickOnMap(context);
+    if (picked != null) {
+      setState(() {
+        _selectedLocation = LatLng(picked["lat"], picked["lng"]);
+        _addressController.text = picked["address"];
+      });
     }
   }
 
@@ -610,6 +621,11 @@ class _HostelAddPageState extends State<HostelAddPage> {
                         IconButton(
                           icon: const Icon(Icons.location_on),
                           onPressed: _pickLocation,
+                        ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.map),
+                          label: const Text("Pick on Map"),
+                          onPressed: _pickLocationOnMap,
                         ),
                       ],
                     ),

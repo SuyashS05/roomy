@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:romy/Models/Users.dart';
 import 'package:romy/Pages/ListingsMap.dart';
+import 'package:romy/Pages/User/home/mapPreviewUsers.dart';
 import 'package:romy/Pages/pp/GoogleMap.dart';
 
-class DashboardPage extends StatelessWidget {
-  final User user;
+class DashboardPage extends StatefulWidget {
+  final UserModel user;
   const DashboardPage({super.key, required this.user});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +26,20 @@ class DashboardPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 🔹 Map preview container
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (_) => ListingsMap(),
+                  ),
+                );
+              },
+              child: const MapPreviewWidget(),
+            ),
+            const SizedBox(height: 16),
             Row(
               children: [
                 _buildCard(
@@ -33,16 +58,16 @@ class DashboardPage extends StatelessWidget {
                   "assets/img/ViewRoomate.png",
                   () => Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) =>  MapSample(),
-                    ),
+                    MaterialPageRoute(builder: (_) => MapSample()),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            const Text("Quick Actions",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              "Quick Actions",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             GridView.count(
               shrinkWrap: true,
@@ -51,19 +76,26 @@ class DashboardPage extends StatelessWidget {
               childAspectRatio: 1.2,
               children: [
                 _buildActionCard(Icons.search, "Find Rooms", Colors.blue),
-                _buildActionCard(Icons.map, "Nearby", Colors.green, onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => ListingsMap()),
-                  );
-                }),
+                _buildActionCard(
+                  Icons.map,
+                  "Nearby",
+                  Colors.green,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => ListingsMap()),
+                    );
+                  },
+                ),
                 _buildActionCard(Icons.chat, "Messages", Colors.orange),
                 _buildActionCard(Icons.support_agent, "Support", Colors.red),
               ],
             ),
             const SizedBox(height: 20),
-            const Text("Recommended Rooms",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              "Recommended Rooms",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             _buildRoomCard(
               "Cozy PG near University",
@@ -90,7 +122,11 @@ class DashboardPage extends StatelessWidget {
   }
 
   Widget _buildCard(
-      BuildContext context, String title, String imgPath, VoidCallback onTap) {
+    BuildContext context,
+    String title,
+    String imgPath,
+    VoidCallback onTap,
+  ) {
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -112,16 +148,22 @@ class DashboardPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text(title,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionCard(IconData icon, String title, Color color, {VoidCallback? onTap}) {
+  Widget _buildActionCard(
+    IconData icon,
+    String title,
+    Color color, {
+    VoidCallback? onTap,
+  }) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 4,
@@ -134,9 +176,13 @@ class DashboardPage extends StatelessWidget {
             children: [
               Icon(icon, size: 40, color: color),
               const SizedBox(height: 8),
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w500)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
         ),
@@ -157,9 +203,15 @@ class DashboardPage extends StatelessWidget {
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-            child: Image.network(imageUrl,
-                width: 100, height: 100, fit: BoxFit.cover),
+            borderRadius: const BorderRadius.horizontal(
+              left: Radius.circular(16),
+            ),
+            child: Image.network(
+              imageUrl,
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+            ),
           ),
           Expanded(
             child: Padding(
@@ -167,17 +219,23 @@ class DashboardPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text(price,
-                      style:
-                          const TextStyle(fontSize: 14, color: Colors.green)),
+                  Text(
+                    price,
+                    style: const TextStyle(fontSize: 14, color: Colors.green),
+                  ),
                   const SizedBox(height: 4),
-                  Text(details,
-                      style:
-                          const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(
+                    details,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 ],
               ),
             ),
