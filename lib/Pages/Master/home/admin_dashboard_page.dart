@@ -2,6 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:romy/Auth/profile_page.dart';
 import 'package:romy/Pages/Master/home/admin_sidebar.dart';
+import 'package:romy/Pages/Master/pages/AdminCampaignApprovalPage.dart';
+import 'package:romy/Pages/Master/pages/AdminCampainPage.dart';
+import 'package:romy/Pages/Master/pages/AdminCreateCampaignPage.dart';
 
 class AdminDashboardPage extends StatelessWidget {
   final User user;
@@ -30,11 +33,51 @@ class AdminDashboardPage extends StatelessWidget {
         child: GridView.count(
           crossAxisCount: 2,
           childAspectRatio: 1.2,
-          children: const [
-            _StatCard("Total Users", "1200", Icons.people, Colors.blue),
-            _StatCard("Room Owners", "350", Icons.house, Colors.green),
-            _StatCard("Active Seekers", "850", Icons.search, Colors.orange),
-            _StatCard("Pending Reports", "12", Icons.report, Colors.red),
+          children: [
+            const _StatCard("Total Users", "1200", Icons.people, Colors.blue),
+            const _StatCard("Room Owners", "350", Icons.house, Colors.green),
+            const _StatCard(
+              "Active Seekers",
+              "850",
+              Icons.search,
+              Colors.orange,
+            ),
+            const _StatCard("Pending Reports", "12", Icons.report, Colors.red),
+
+            // ➕ New Card for Campaigns
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AdminCampaignsPage(),
+                  ),
+                );
+              },
+              child: const _StatCard(
+                "Create Campaign",
+                "",
+                Icons.campaign,
+                Colors.purple,
+              ),
+            ),
+
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AdminCampaignApprovalPage(),
+                  ),
+                );
+              },
+              child: const _StatCard(
+                "Approve Campaigns",
+                "",
+                Icons.verified,
+                Colors.teal,
+              ),
+            ),
           ],
         ),
       ),
@@ -62,8 +105,10 @@ class _StatCard extends StatelessWidget {
           children: [
             Icon(icon, size: 40, color: color),
             const SizedBox(height: 6),
-            Text(value,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 6),
             Text(title, style: const TextStyle(fontSize: 16)),
           ],

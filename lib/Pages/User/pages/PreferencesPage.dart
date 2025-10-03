@@ -511,40 +511,17 @@ class _PreferencesPageState extends State<PreferencesPage> {
                         _buildPreferenceTile('Interests', _selectedInterests),
                         _buildPreferenceTile('Hobbies', _selectedHobbies),
                         _buildPreferenceTile('Work Shift', _workShift),
-                        _buildPreferenceTile(
-                          'Bathroom Sharing',
-                          _shareBathroom == null
-                              ? null
-                              : (_shareBathroom! ? 'Yes' : 'No'),
-                        ),
+                        _buildPreferenceTile('Bathroom Sharing',_shareBathroom == null ? null : (_shareBathroom! ? 'Yes' : 'No'),),
                         _buildPreferenceTile('Food Preferences', _foodType),
                         _buildPreferenceTile('Study Time', _studyTime),
                         _buildPreferenceTile('Fan Preference', _fanPreference),
                         _buildPreferenceTile('AC Preference', _acPreference),
-                        _buildPreferenceTile(
-                          'Floor Preference',
-                          _floorPreference,
-                        ),
-                        _buildPreferenceTile(
-                          'PG Duration',
-                          _pgDuration?.toString(),
-                        ),
-                        _buildPreferenceTile(
-                          'PG Duration Unit',
-                          _pgDurationUnit,
-                        ),
-                        _buildPreferenceTile(
-                          'Occupation Category',
-                          _occupationCategory,
-                        ),
-                        _buildPreferenceTile(
-                          'Occupation Detail',
-                          _occupationDetail,
-                        ),
-                        _buildPreferenceTile(
-                          'Physical Condition',
-                          _physicalCondition,
-                        ),
+                        _buildPreferenceTile('Floor Preference',_floorPreference),
+                        _buildPreferenceTile('PG Duration', _pgDuration?.toString(),),
+                        _buildPreferenceTile('PG Duration Unit', _pgDurationUnit,),
+                        _buildPreferenceTile('Occupation Category', _occupationCategory,),
+                        _buildPreferenceTile('Occupation Detail', _occupationDetail,),
+                        _buildPreferenceTile('Physical Condition',_physicalCondition,),
                         _buildPreferenceTile('Allergies', _selectedAllergies),
                         _buildPreferenceTile('Diseases', _selectedDiseases),
                         _buildPreferenceTile('Languages', _selectedLanguages),

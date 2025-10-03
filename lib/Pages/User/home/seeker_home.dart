@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:romy/Auth/profile_page.dart';
+import 'package:romy/Pages/User/Manage/NotificationPage.dart';
 import 'package:romy/provoiders/locale_provider.dart';
 import 'package:romy/provoiders/user_details_provider.dart';
 import 'package:romy/provoiders/user_provider.dart';
@@ -23,20 +24,6 @@ class _SeekerHomeState extends State<SeekerHome> {
   int _index = 0;
   late List<Widget> pages;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final userDetails =
-        context.watch<UserDetailsProvider>().user; // ✅ get Firestore user
-
-    // Initialize pages once userDetails is available
-    pages = [
-      if (userDetails != null) DashboardPage(user: userDetails),
-      const SavedPage(),
-      const SeekerProfilePage(),
-    ];
-  }
-
   void _logout() async {
     final userProvider = context.read<UserProvider>();
     await FirebaseAuth.instance.signOut();
@@ -51,11 +38,15 @@ class _SeekerHomeState extends State<SeekerHome> {
     final localeProvider = context.watch<LocaleProvider>();
     final userDetails = context.watch<UserDetailsProvider>().user;
 
+    final pages = [
+      if (userDetails != null) DashboardPage(user: userDetails),
+      const SavedPage(),
+      const SeekerProfilePage(),
+    ];
+
     if (userDetails == null) {
       // Show loading until userDetails is fetched
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -65,8 +56,9 @@ class _SeekerHomeState extends State<SeekerHome> {
           IconButton(
             icon: const Icon(Icons.notifications),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("no_new_notifications".tr())),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => NotificationPage()),
               );
             },
           ),
@@ -86,8 +78,7 @@ class _SeekerHomeState extends State<SeekerHome> {
           padding: EdgeInsets.zero,
           children: [
             UserAccountsDrawerHeader(
-              accountName:
-                  Text(userDetails.displayName ?? "guest_user".tr()),
+              accountName: Text(userDetails.displayName ?? "guest_user".tr()),
               accountEmail: Text(userDetails.email ?? ""),
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
@@ -166,3 +157,18 @@ class _SeekerHomeState extends State<SeekerHome> {
     );
   }
 }
+
+
+// @override
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
+  //   final userDetails =
+  //       context.watch<UserDetailsProvider>().user; // ✅ get Firestore user
+
+  //   // Initialize pages once userDetails is available
+  //   pages = [
+  //     if (userDetails != null) DashboardPage(user: userDetails),
+  //     const SavedPage(),
+  //     const SeekerProfilePage(),
+  //   ];
+  // }

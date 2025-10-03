@@ -27,6 +27,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   double? _lat;
   double? _lng;
+  String? _gender;
 
   @override
   void initState() {
@@ -43,6 +44,7 @@ class _ProfilePageState extends State<ProfilePage> {
       _address.text = user.address ?? '';
       _email2.text = user.email2 ?? '';
       _dob = user.dob;
+      _gender = user.gender;
       _age = user.dob != null ? _calculateAge(user.dob!) : null;
       _lat = user.lat;
       _lng = user.lng;
@@ -64,6 +66,7 @@ class _ProfilePageState extends State<ProfilePage> {
       email2: _email2.text.trim(),
       dob: _dob,
       age: _age,
+      gender: _gender,
       lat: _lat,
       lng: _lng,
       profileComplete: _isProfileComplete(),
@@ -77,15 +80,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() => _loading = false);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Profile_updated".tr())),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text("Profile_updated".tr())));
   }
 
   bool _isProfileComplete() {
     return _phone.text.trim().isNotEmpty &&
         _email2.text.trim().isNotEmpty &&
         _dob != null;
+    _gender != null && _gender!.isNotEmpty;
   }
 
   int _calculateAge(DateTime dob) {
@@ -203,9 +207,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final localeProvider = context.watch<LocaleProvider>();
 
     if (user == null) {
-      return Scaffold(
-        body: Center(child: Text("No user data available".tr())),
-      );
+      return Scaffold(body: Center(child: Text("No user data available".tr())));
     }
 
     return Scaffold(
@@ -215,8 +217,10 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           children: [
             if (user.role.isNotEmpty) Text("Role: ${user.role}"),
-            Text("Primary Email: ${user.email}",
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              "Primary Email: ${user.email}",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
 
             const SizedBox(height: 12),
             GestureDetector(
@@ -226,13 +230,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundImage: user.profileUrl != null &&
-                            user.profileUrl!.isNotEmpty
-                        ? NetworkImage(user.profileUrl!)
-                        : null,
-                    child: user.profileUrl == null || user.profileUrl!.isEmpty
-                        ? const Icon(Icons.add_a_photo, size: 30)
-                        : null,
+                    backgroundImage:
+                        user.profileUrl != null && user.profileUrl!.isNotEmpty
+                            ? NetworkImage(user.profileUrl!)
+                            : null,
+                    child:
+                        user.profileUrl == null || user.profileUrl!.isEmpty
+                            ? const Icon(Icons.add_a_photo, size: 30)
+                            : null,
                   ),
                   Positioned(
                     right: -2,
@@ -255,10 +260,44 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
 
             const SizedBox(height: 12),
-            TextField(controller: _name, decoration: InputDecoration(labelText: 'full_name'.tr())),
-            TextField(controller: _phone, decoration: InputDecoration(labelText: 'phone'.tr())),
-            TextField(controller: _city, decoration: InputDecoration(labelText: 'city'.tr())),
-            TextField(controller: _address, decoration: InputDecoration(labelText: 'address'.tr())),
+            TextField(
+              controller: _name,
+              decoration: InputDecoration(labelText: 'full_name'.tr()),
+            ),
+            TextField(
+              controller: _phone,
+              decoration: InputDecoration(labelText: 'phone'.tr()),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _gender,
+                    decoration: InputDecoration(labelText: 'gender'.tr()),
+                    items:
+                        ['Male', 'Female', 'Other'].map((g) {
+                          return DropdownMenuItem(
+                            value: g,
+                            child: Text(g.tr()),
+                          );
+                        }).toList(),
+                    onChanged: (val) {
+                      setState(() => _gender = val);
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+            TextField(
+              controller: _city,
+              decoration: InputDecoration(labelText: 'city'.tr()),
+            ),
+            TextField(
+              controller: _address,
+              decoration: InputDecoration(labelText: 'address'.tr()),
+            ),
 
             const SizedBox(height: 8),
             Row(
@@ -277,7 +316,10 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
 
-            TextField(controller: _email2, decoration: InputDecoration(labelText: 'secondary_email'.tr())),
+            TextField(
+              controller: _email2,
+              decoration: InputDecoration(labelText: 'secondary_email'.tr()),
+            ),
 
             const SizedBox(height: 12),
             Row(
@@ -296,9 +338,10 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _loading ? null : _save,
-              child: _loading
-                  ? const CircularProgressIndicator()
-                  : Text("save".tr()),
+              child:
+                  _loading
+                      ? const CircularProgressIndicator()
+                      : Text("save".tr()),
             ),
           ],
         ),
@@ -306,7 +349,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
-
 
 // import 'package:flutter/material.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';

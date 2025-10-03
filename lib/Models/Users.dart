@@ -22,6 +22,7 @@ class UserModel {
   final int? userId;
   final String? deviceToken;
   final DateTime? dob;
+  final String? gender;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -45,6 +46,7 @@ class UserModel {
     this.userId,
     this.deviceToken,
     this.dob,
+    this.gender,
     this.createdAt,
     this.updatedAt,
   });
@@ -68,6 +70,7 @@ class UserModel {
       lat: (map['lat'] as num?)?.toDouble(),
       lng: (map['lng'] as num?)?.toDouble(),
       userId: (map['userId'] as num?)?.toInt(),
+      gender: map['gender'] as String?,
       deviceToken: map['deviceToken'] as String?,
       dob: (map['dob'] != null) ? (map['dob'] as Timestamp).toDate() : null,
       createdAt: (map['createdAt'] != null) ? (map['createdAt'] as Timestamp).toDate() : null,
@@ -94,6 +97,7 @@ class UserModel {
       'userId': userId,
       'deviceToken': deviceToken,
       'dob': dob,
+      'gender': gender,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
     };
@@ -109,6 +113,7 @@ class UserModel {
     String? role,
     String? profileUrl,
     DateTime? dob,
+    String? gender,
     int? age,
     double? lat,
     double? lng,
@@ -130,6 +135,7 @@ class UserModel {
       role: role ?? this.role,
       profileUrl: profileUrl ?? this.profileUrl,
       dob: dob ?? this.dob,
+      gender: gender ?? this.gender,
       age: age ?? this.age,
       lat: lat ?? this.lat,
       lng: lng ?? this.lng,
