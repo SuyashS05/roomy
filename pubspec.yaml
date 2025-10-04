@@ -55,6 +55,7 @@ dependencies:
   google_fonts: ^6.3.2
   provider: ^6.1.5+1
   easy_localization: ^3.0.8
+  fl_chart: ^0.63.0
 
 dev_dependencies:
   flutter_test:

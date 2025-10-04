@@ -128,8 +128,8 @@ class _SeekerHomeState extends State<SeekerHome> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.exit_to_app),
-              title: Text("logout".tr()),
+              leading: const Icon(Icons.exit_to_app, color: Colors.red),
+              title: Text("logout".tr(), style: const TextStyle(color: Colors.red)),
               onTap: _logout,
             ),
           ],

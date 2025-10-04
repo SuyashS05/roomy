@@ -34,7 +34,7 @@ class HomeRoleRouter extends StatelessWidget {
       case "user":
         return SeekerHome();
       case "roomOwner":
-        return OwnerHome(user: user);
+        return OwnerHome();
       case "admin":
       case "master":
         return AdminHome(user: user);

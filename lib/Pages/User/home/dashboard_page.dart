@@ -9,6 +9,7 @@ import 'package:romy/Pages/User/Manage/UserSupportPage.dart';
 import 'package:romy/Pages/User/home/mapPreviewUsers.dart';
 import 'package:romy/Pages/User/pages/FindRoommetsPage.dart';
 import 'package:romy/Pages/User/pages/FindroomPage.dart';
+import 'package:romy/Pages/User/pages/SearchBar.dart';
 
 class DashboardPage extends StatefulWidget {
   final UserModel user;
@@ -83,7 +84,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   "assets/img/ViewRoom.png",
                   () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => RoomSearchWidget()),
+                    MaterialPageRoute(builder: (_) => FindroomPage()),
                   ),
                 ),
                 const SizedBox(width: 8),

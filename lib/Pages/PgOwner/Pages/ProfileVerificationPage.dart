@@ -1,15 +1,16 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:romy/Helpers/Notifi_Snackbar.dart';
+import 'package:romy/Models/Users.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class RoomOwnerVerificationPage extends StatefulWidget {
-  final User user;
+  final UserModel user;
   const RoomOwnerVerificationPage({super.key, required this.user});
 
   @override
@@ -18,6 +19,7 @@ class RoomOwnerVerificationPage extends StatefulWidget {
 }
 
 class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
+  static final Map<String, Map<String, dynamic>> _cache = {};
   final _formKey = GlobalKey<FormState>();
 
   final _aadhaarController = TextEditingController();
@@ -40,6 +42,22 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
   /// Load existing verification data from Firestore
   Future<void> _loadExistingData() async {
     try {
+      if (_cache.containsKey(widget.user.uid)) {
+        // Use cached data
+        final data = _cache[widget.user.uid]!;
+        setState(() {
+          _isEditing = true;
+          _aadhaarController.text = data["aadhaarNumber"] ?? "";
+          _aadhaarNameController.text = data["aadhaarName"] ?? "";
+          _panController.text = data["panNumber"] ?? "";
+          _whatsappController.text = data["whatsapp"] ?? "";
+          _instagramController.text = data["instagram"] ?? "";
+          _existingImageUrl = data["addressProofUrl"];
+        });
+        return; // Skip Firestore read
+      }
+
+      // Otherwise, fetch from Firestore
       final doc =
           await FirebaseFirestore.instance
               .collection("RoomOwners")
@@ -48,6 +66,7 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
 
       if (doc.exists) {
         final data = doc.data()!;
+        _cache[widget.user.uid] = data; // Cache it
         setState(() {
           _isEditing = true;
           _aadhaarController.text = data["aadhaarNumber"] ?? "";
@@ -61,7 +80,7 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
     } catch (e) {
       AppNotifier.show(
         context,
-        message: "Error loading old data: $e",
+        message: "error_loading_data".tr(args: [e.toString()]),
         type: NotificationType.error,
       );
     }
@@ -78,12 +97,12 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
     if (picked != null) {
       setState(() {
         _pickedImage = File(picked.path);
-        _existingImageUrl = null; // overwrite old if new selected
+        _existingImageUrl = null;
       });
     }
   }
 
-  /// Compress & upload
+  /// Compress & upload image
   Future<String?> _uploadImage(File file) async {
     try {
       Uint8List? compressed = await FlutterImageCompress.compressWithFile(
@@ -113,9 +132,12 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
   /// Submit / Update verification request
   Future<void> _submitVerification() async {
     if (!_formKey.currentState!.validate()) return;
+
     if (_pickedImage == null && _existingImageUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please upload Address Proof image")),
+      AppNotifier.show(
+        context,
+        message: "upload_address_proof".tr(),
+        type: NotificationType.warning,
       );
       return;
     }
@@ -146,29 +168,38 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
             "unverifiedReason": "",
           }, SetOptions(merge: true));
 
+      // Update cache
+      _cache[widget.user.uid] = {
+        "aadhaarNumber": _aadhaarController.text.trim(),
+        "aadhaarName": _aadhaarNameController.text.trim(),
+        "panNumber": _panController.text.trim(),
+        "whatsapp": _whatsappController.text.trim(),
+        "instagram": _instagramController.text.trim(),
+        "addressProofUrl": imageUrl ?? "",
+        "adminCheck": "pending",
+        "adminVerified": false,
+      };
+
       if (mounted) {
         AppNotifier.show(
           context,
           message:
               _isEditing
-                  ? "Verification update submitted for review ✅"
-                  : "Verification submitted for review ✅",
+                  ? "verification_updated".tr()
+                  : "verification_submitted".tr(),
           type: NotificationType.success,
         );
 
-        // Schedule navigation AFTER current frame
         Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.pop(context);
-            });
-          }
+          if (mounted) Navigator.pop(context);
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(
+      AppNotifier.show(
         context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+        message: "error_submitting".tr(args: [e.toString()]),
+        type: NotificationType.error,
+      );
     } finally {
       setState(() => _isLoading = false);
     }
@@ -189,7 +220,7 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _isEditing ? "Update Verification" : "Profile Verification",
+          _isEditing ? "update_verification".tr() : "profile_verification".tr(),
         ),
       ),
       body: SingleChildScrollView(
@@ -198,24 +229,27 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
           key: _formKey,
           child: Column(
             children: [
-              const Text(
-                "Submit your KYC details for verification",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              Text(
+                "submit_kyc".tr(),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 20),
 
               // Aadhaar Number
               TextFormField(
                 controller: _aadhaarController,
-                decoration: const InputDecoration(
-                  labelText: "Aadhaar Number (12 digits)",
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: "aadhaar_number".tr(),
+                  border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,
                 maxLength: 12,
                 validator: (value) {
                   if (value == null || value.length != 12) {
-                    return "Enter valid 12-digit Aadhaar number";
+                    return "enter_valid_aadhaar".tr();
                   }
                   return null;
                 },
@@ -225,57 +259,55 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
               // Aadhaar Name
               TextFormField(
                 controller: _aadhaarNameController,
-                decoration: const InputDecoration(
-                  labelText: "Name (as per Aadhaar)",
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: "aadhaar_name".tr(),
+                  border: const OutlineInputBorder(),
                 ),
                 validator:
                     (value) =>
                         value == null || value.isEmpty
-                            ? "Required field"
+                            ? "required_field".tr()
                             : null,
               ),
               const SizedBox(height: 16),
 
-              // PAN Number
+              // PAN
               TextFormField(
                 controller: _panController,
-                decoration: const InputDecoration(
-                  labelText: "PAN Number (Optional)",
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: "pan_number".tr(),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
 
-              // WhatsApp Number
+              // WhatsApp
               TextFormField(
                 controller: _whatsappController,
-                decoration: const InputDecoration(
-                  labelText: "WhatsApp Number",
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: "whatsapp_number".tr(),
+                  border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "WhatsApp number is required";
-                  }
-                  return null;
-                },
+                validator:
+                    (value) =>
+                        value == null || value.isEmpty
+                            ? "whatsapp_required".tr()
+                            : null,
               ),
               const SizedBox(height: 16),
 
-              // Instagram Link
+              // Instagram
               TextFormField(
                 controller: _instagramController,
-                decoration: const InputDecoration(
-                  labelText: "Instagram Link (Optional)",
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: "instagram_link".tr(),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Address Proof Upload
-              // Address Proof Upload
+              // Address Proof
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
@@ -291,18 +323,14 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
                       Expanded(
                         child: Text(
                           _pickedImage != null
-                              ? "Image Selected"
+                              ? "image_selected".tr()
                               : _existingImageUrl != null
-                              ? "Old Image Attached"
-                              : "Upload Address Proof",
+                              ? "old_image_attached".tr()
+                              : "upload_address_proof".tr(),
                         ),
                       ),
-
-                      // ✅ Check icon if something exists
                       if (_pickedImage != null || _existingImageUrl != null)
                         const Icon(Icons.check_circle, color: Colors.green),
-
-                      // ✅ Eye icon to preview old uploaded image
                       if (_existingImageUrl != null && _pickedImage == null)
                         IconButton(
                           icon: const Icon(
@@ -346,8 +374,8 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
                     icon: const Icon(Icons.verified_user),
                     label: Text(
                       _isEditing
-                          ? "Update Verification Request"
-                          : "Submit for Verification",
+                          ? "update_verification_request".tr()
+                          : "submit_verification".tr(),
                     ),
                     onPressed: _submitVerification,
                   ),

@@ -1,46 +1,135 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:romy/Helpers/LogOut_confim.dart';
 import 'package:romy/Helpers/Notifi_Snackbar.dart';
+import 'package:romy/Helpers/roomOwnerVerifi.dart';
+import 'package:romy/Models/Users.dart';
 import 'package:romy/Pages/PgOwner/Pages/HomeDetailsPage.dart';
 import 'package:romy/Pages/PgOwner/Pages/HostelDetailsPage.dart';
 import 'package:romy/Pages/PgOwner/Pages/PgDetailsPage.dart';
-// import 'package:romy/Pages/PgOwner/Pages/HostelDetails.dart';
+import 'package:romy/Pages/PgOwner/Pages/ProfileVerificationPage.dart';
 
 import '../Pages/hostel_add_page.dart';
 import '../Pages/pg_add_page.dart';
 import '../Pages/house_add_page.dart';
 
 class MyListingsPage extends StatelessWidget {
-  final User user;
+  final UserModel user;
   const MyListingsPage({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("My Listings"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              AppNotifier.show(
-                context,
-                message: "No new notifications",
-                type: NotificationType.info,
-              );
-            },
-          ),
-        ],
-      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            "Add New Listing",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              const Text(
+                "Add New Listing",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              InkWell(
+                onTap: () async {
+                  // Check if profile is complete first
+                  final doc =
+                      await FirebaseFirestore.instance
+                          .collection("users")
+                          .doc(user.uid)
+                          .get();
+
+                  final isComplete =
+                      doc.exists
+                          ? doc["profileComplete"] as bool? ?? false
+                          : false;
+
+                  if (!isComplete) {
+                    AppNotifier.show(
+                      context,
+                      title: "incomplete_profile".tr(),
+                      message: "please_complete_profile".tr(),
+                      type: NotificationType.warning,
+                    );
+                    return;
+                  }
+
+                  // ✅ Check if user is verified using the helper
+                  final isVerified = await checkVerified(context, user.uid);
+                  if (!isVerified) return; // Stop if not verified
+
+                  // Navigate to verification page if needed
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RoomOwnerVerificationPage(user: user),
+                    ),
+                  );
+                },
+                child: Row(
+                  children: [
+                    const Icon(Icons.verified_user, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    FutureBuilder<DocumentSnapshot>(
+                      future:
+                          FirebaseFirestore.instance
+                              .collection("RoomOwners")
+                              .doc(user.uid)
+                              .get(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          );
+                        }
+
+                        if (!snapshot.hasData || !snapshot.data!.exists) {
+                          return _buildStatusChip(
+                            "get_verified".tr(),
+                            Colors.grey,
+                          );
+                        }
+
+                        final data =
+                            snapshot.data!.data() as Map<String, dynamic>;
+                        final adminCheck =
+                            (data["adminCheck"] ?? "pending")
+                                .toString()
+                                .toLowerCase();
+                        final adminVerified = data["adminVerified"] ?? false;
+
+                        String statusText;
+                        Color statusColor;
+
+                        if (adminVerified && adminCheck == "approved") {
+                          statusText = "verified".tr();
+                          statusColor = Colors.green;
+                        } else if (adminCheck == "pending") {
+                          statusText = "pending".tr();
+                          statusColor = Colors.orange;
+                        } else if (adminCheck == "rejected" ||
+                            adminCheck == "no") {
+                          statusText = "rejected".tr();
+                          statusColor = Colors.red;
+                        } else {
+                          statusText = "get_verified".tr();
+                          statusColor = Colors.grey;
+                        }
+
+                        return _buildStatusChip(statusText, statusColor);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+
           const SizedBox(height: 12),
 
           // --- Add Cards ---
@@ -52,37 +141,46 @@ class MyListingsPage extends StatelessWidget {
                 title: "Hostel",
                 icon: Icons.apartment,
                 color: Colors.blue,
-                onTap:
-                    () => Navigator.push(
+                onTap: () async {
+                  if (await checkVerified(context, user.uid)) {
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => HostelAddPage(owner: user),
                       ),
-                    ),
+                    );
+                  }
+                },
               ),
               _buildAddCard(
                 context,
                 title: "PG",
                 icon: Icons.people,
                 color: Colors.orange,
-                onTap:
-                    () => Navigator.push(
+                onTap: () async {
+                  if (await checkVerified(context, user.uid)) {
+                    Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => PgAddPage(owner: user)),
-                    ),
+                    );
+                  }
+                },
               ),
               _buildAddCard(
                 context,
                 title: "House",
                 icon: Icons.house,
                 color: Colors.green,
-                onTap:
-                    () => Navigator.push(
+                onTap: () async {
+                  if (await checkVerified(context, user.uid)) {
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => HomeAddPage(owner: user),
                       ),
-                    ),
+                    );
+                  }
+                },
               ),
             ],
           ),
@@ -143,7 +241,7 @@ class MyListingsPage extends StatelessWidget {
                             details: "$city • $type",
                             imageUrl: imageUrl,
                             ownerUid: data["ownerUid"] ?? "",
-                            currentUser: user,
+                            currentUser: FirebaseAuth.instance.currentUser!,
                             isAdminOrMaster: isAdminOrMaster,
                           );
                         }).toList(),
@@ -161,6 +259,52 @@ class MyListingsPage extends StatelessWidget {
     final doc =
         await FirebaseFirestore.instance.collection('users').doc(uid).get();
     return doc.exists ? doc['role'] as String? : null;
+  }
+
+  /// Helper function to check if the user is verified
+  // Future<bool> checkVerified(BuildContext context, String uid) async {
+  //   final doc =
+  //       await FirebaseFirestore.instance
+  //           .collection("RoomOwners")
+  //           .doc(uid)
+  //           .get();
+
+  //   final data = doc.exists ? doc.data() as Map<String, dynamic> : null;
+
+  //   final isVerified =
+  //       data != null &&
+  //       (data["adminCheck"]?.toString().toLowerCase() == "approved") &&
+  //       (data["adminVerified"] == true);
+
+  //   if (!isVerified) {
+  //     AppNotifier.show(
+  //       context,
+  //       title: "not_verified".tr(),
+  //       message: "please_verify_id_first".tr(),
+  //       type: NotificationType.warning,
+  //     );
+  //   }
+
+  //   return isVerified;
+  // }
+
+  Widget _buildStatusChip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color, width: 1),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 
   /// Card for Adding new listing type
@@ -220,23 +364,20 @@ class MyListingsPage extends StatelessWidget {
     final canEdit = currentUser.uid == ownerUid || isAdminOrMaster;
 
     return InkWell(
-       onTap: () {
-      // ✅ Choose the details page based on type
-      Widget detailsPage;
-      if (type == "home") {
-        detailsPage = HomeDetailsPage(listingId: listingId);
-      } else if (type == "pg") {
-        detailsPage = PgDetailsPage(listingId: listingId);
-      } else {
-        // default to hostel if nothing matches
-        detailsPage = HostelDetailsPage(listingId: listingId);
-      }
+      onTap: () {
+        // ✅ Choose the details page based on type
+        Widget detailsPage;
+        if (type == "home") {
+          detailsPage = HomeDetailsPage(listingId: listingId);
+        } else if (type == "pg") {
+          detailsPage = PgDetailsPage(listingId: listingId);
+        } else {
+          // default to hostel if nothing matches
+          detailsPage = HostelDetailsPage(listingId: listingId);
+        }
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => detailsPage),
-      );
-    },
+        Navigator.push(context, MaterialPageRoute(builder: (_) => detailsPage));
+      },
       child: Card(
         margin: const EdgeInsets.only(bottom: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -290,10 +431,7 @@ class MyListingsPage extends StatelessWidget {
                                   MaterialPageRoute(
                                     builder:
                                         (_) => HostelAddPage(
-                                          owner:
-                                              FirebaseAuth
-                                                  .instance
-                                                  .currentUser!,
+                                          owner: user,
                                           editListingId: listingId,
                                         ),
                                   ),
@@ -304,10 +442,7 @@ class MyListingsPage extends StatelessWidget {
                                   MaterialPageRoute(
                                     builder:
                                         (_) => PgAddPage(
-                                          owner:
-                                              FirebaseAuth
-                                                  .instance
-                                                  .currentUser!,
+                                          owner: user,
                                           editListingId: listingId,
                                         ),
                                   ),
@@ -318,10 +453,7 @@ class MyListingsPage extends StatelessWidget {
                                   MaterialPageRoute(
                                     builder:
                                         (_) => HomeAddPage(
-                                          owner:
-                                              FirebaseAuth
-                                                  .instance
-                                                  .currentUser!,
+                                          owner: user,
                                           editListingId: listingId,
                                         ),
                                   ),
@@ -395,4 +527,3 @@ class MyListingsPage extends StatelessWidget {
     );
   }
 }
-

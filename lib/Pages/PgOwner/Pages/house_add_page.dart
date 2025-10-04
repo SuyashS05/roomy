@@ -9,10 +9,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:romy/Helpers/LocationHelper.dart';
 import 'package:romy/Helpers/Notifi_Snackbar.dart';
+import 'package:romy/Models/Users.dart';
 import 'package:romy/Pages/locationpiker.dart';
 
 class HomeAddPage extends StatefulWidget {
-  final User owner;
+  final UserModel owner;
   final String? editListingId;
 
   const HomeAddPage({super.key, required this.owner, this.editListingId});

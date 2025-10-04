@@ -9,9 +9,10 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:romy/Helpers/LocationHelper.dart';
 import 'package:romy/Helpers/Notifi_Snackbar.dart';
+import 'package:romy/Models/Users.dart';
 
 class HostelAddPage extends StatefulWidget {
-  final User owner;
+  final UserModel owner;
   final String? editListingId; // if null → add mode, else edit mode
 
   const HostelAddPage({super.key, required this.owner, this.editListingId});
