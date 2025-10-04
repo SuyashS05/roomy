@@ -43,9 +43,7 @@ class _OwnerHomeState extends State<OwnerHome> {
 
     // 🔹 Handle null user safely
     if (userDetails == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     // 🔹 Pages list depends on userDetails
@@ -77,16 +75,17 @@ class _OwnerHomeState extends State<OwnerHome> {
           children: [
             UserAccountsDrawerHeader(
               accountName: Text(
-                  userDetails.displayName?.isNotEmpty == true
-                      ? userDetails.displayName!
-                      : "guest_user".tr()),
+                userDetails.displayName?.isNotEmpty == true
+                    ? userDetails.displayName!
+                    : "guest_user".tr(),
+              ),
               accountEmail: Text(userDetails.email),
               currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Text(
-                  _getInitial(userDetails.displayName),
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
+                radius: 30,
+                backgroundImage:
+                    userDetails.profileUrl != null
+                        ? NetworkImage(userDetails.profileUrl!)
+                        : const AssetImage('assets/admin.png') as ImageProvider,
               ),
             ),
             ListTile(
@@ -134,7 +133,10 @@ class _OwnerHomeState extends State<OwnerHome> {
             ),
             ListTile(
               leading: const Icon(Icons.exit_to_app, color: Colors.red),
-              title: Text("logout".tr(), style: const TextStyle(color: Colors.red)),
+              title: Text(
+                "logout".tr(),
+                style: const TextStyle(color: Colors.red),
+              ),
               onTap: _logout,
             ),
           ],
@@ -179,82 +181,85 @@ class _OwnerHomeState extends State<OwnerHome> {
   }
 
   void _showAddListingSheet(UserModel userDetails) async {
-  // ✅ Check verification before showing the sheet
-  final isVerified = await checkVerified(context, userDetails.uid);
-  if (!isVerified) return;
+    // ✅ Check verification before showing the sheet
+    final isVerified = await checkVerified(context, userDetails.uid);
+    if (!isVerified) return;
 
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    builder: (_) => Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            "add_new_listing".tr(),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder:
+          (_) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "add_new_listing".tr(),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildAddCard(
+                      title: "hostel".tr(),
+                      icon: Icons.apartment,
+                      color: Colors.blue,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => HostelAddPage(owner: userDetails),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildAddCard(
+                      title: "pg".tr(),
+                      icon: Icons.people,
+                      color: Colors.orange,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PgAddPage(owner: userDetails),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildAddCard(
+                      title: "house".tr(),
+                      icon: Icons.house,
+                      color: Colors.green,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => HomeAddPage(owner: userDetails),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildAddCard(
-                title: "hostel".tr(),
-                icon: Icons.apartment,
-                color: Colors.blue,
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => HostelAddPage(owner: userDetails),
-                    ),
-                  );
-                },
-              ),
-              _buildAddCard(
-                title: "pg".tr(),
-                icon: Icons.people,
-                color: Colors.orange,
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => PgAddPage(owner: userDetails),
-                    ),
-                  );
-                },
-              ),
-              _buildAddCard(
-                title: "house".tr(),
-                icon: Icons.house,
-                color: Colors.green,
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => HomeAddPage(owner: userDetails),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    ),
-  );
-}
-
+    );
+  }
 
   Widget _buildAddCard({
     required String title,
@@ -287,7 +292,10 @@ class _OwnerHomeState extends State<OwnerHome> {
               child: Icon(icon, color: Colors.white, size: 28),
             ),
             const SizedBox(height: 8),
-            Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+            Text(
+              title,
+              style: TextStyle(fontWeight: FontWeight.bold, color: color),
+            ),
           ],
         ),
       ),

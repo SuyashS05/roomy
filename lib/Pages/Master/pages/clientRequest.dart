@@ -1,19 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:romy/Pages/Master/pages/RoomOwnerDetails.dart';
+import 'package:romy/provoiders/user_details_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:romy/Pages/Master/pages/ClientRequestCard.dart';
 
 class ClientRequestsPage extends StatefulWidget {
-  final User user;
-  const ClientRequestsPage({super.key, required this.user});
+  const ClientRequestsPage({super.key});
 
   @override
   State<ClientRequestsPage> createState() => _ClientRequestsPageState();
 }
 
 class _ClientRequestsPageState extends State<ClientRequestsPage> {
+  
   final _searchController = TextEditingController();
   String _searchQuery = "";
 
@@ -75,6 +77,7 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<UserDetailsProvider>().user;
     return Scaffold(
       appBar: AppBar(
         title: const Text("Room Owners Management"),

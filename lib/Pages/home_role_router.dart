@@ -37,7 +37,7 @@ class HomeRoleRouter extends StatelessWidget {
         return OwnerHome();
       case "admin":
       case "master":
-        return AdminHome(user: user);
+        return AdminHome();
       default:
         return const Scaffold(
           body: Center(child: Text("No valid role assigned")),

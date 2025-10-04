@@ -81,15 +81,11 @@ class _SeekerHomeState extends State<SeekerHome> {
               accountName: Text(userDetails.displayName ?? "guest_user".tr()),
               accountEmail: Text(userDetails.email ?? ""),
               currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Text(
-                  (userDetails.displayName?.substring(0, 1) ?? "U")
-                      .toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                radius: 30,
+                backgroundImage:
+                    userDetails.profileUrl != null
+                        ? NetworkImage(userDetails.profileUrl!)
+                        : const AssetImage('assets/admin.png') as ImageProvider,
               ),
             ),
             ListTile(
@@ -129,7 +125,10 @@ class _SeekerHomeState extends State<SeekerHome> {
             ),
             ListTile(
               leading: const Icon(Icons.exit_to_app, color: Colors.red),
-              title: Text("logout".tr(), style: const TextStyle(color: Colors.red)),
+              title: Text(
+                "logout".tr(),
+                style: const TextStyle(color: Colors.red),
+              ),
               onTap: _logout,
             ),
           ],
