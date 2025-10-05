@@ -97,11 +97,45 @@ Roomie is a comprehensive platform designed to simplify the process of finding r
 
 ## 📸 Screenshots
 
-![Home Screen](assets/screenshots/home.png)
+![Home Screen](assets/img/1.png)
 
-![Room Matching](assets/screenshots/matching.png)
+![Room Matching](assets/img/2.png)
 
-![Chat Interface](assets/screenshots/chat.png)
+![Chat Interface](assets/img/3.png)
+
+## 📸 Screenshots
+
+<div style="display: flex; flex-wrap: wrap; gap: 10px; overflow-x: auto;">
+
+<img src="assets/img/1.png" width="200" />
+<img src="assets/img/2.png" width="200" />
+<img src="assets/img/3.png" width="200" />
+<img src="assets/img/4.png" width="200" />
+<img src="assets/img/5.png" width="200" />
+<img src="assets/img/6.png" width="200" />
+<img src="assets/img/7.png" width="200" />
+<img src="assets/img/8.png" width="200" />
+<img src="assets/img/9.png" width="200" />
+<img src="assets/img/10.png" width="200" />
+<img src="assets/img/11.png" width="200" />
+<img src="assets/img/12.png" width="200" />
+<img src="assets/img/13.png" width="200" />
+<img src="assets/img/14.png" width="200" />
+<img src="assets/img/15.png" width="200" />
+<img src="assets/img/16.png" width="200" />
+<img src="assets/img/17.png" width="200" />
+<img src="assets/img/18.png" width="200" />
+<img src="assets/img/19.png" width="200" />
+<img src="assets/img/20.png" width="200" />
+<img src="assets/img/21.png" width="200" />
+<img src="assets/img/22.png" width="200" />
+<img src="assets/img/23.png" width="200" />
+<img src="assets/img/24.png" width="200" />
+<img src="assets/img/25.png" width="200" />
+
+</div>
+
+
 
 ---
 
