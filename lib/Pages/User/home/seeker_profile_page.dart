@@ -19,19 +19,19 @@ class SeekerProfilePage extends StatelessWidget {
     final firebaseUser = FirebaseAuth.instance.currentUser;
 
     if (userModel == null || firebaseUser == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final profileUrl =
-        (userModel.profileUrl?.isNotEmpty == true) ? userModel.profileUrl! : (firebaseUser.photoURL ?? "");
+        (userModel.profileUrl?.isNotEmpty == true)
+            ? userModel.profileUrl!
+            : (firebaseUser.photoURL ?? "");
     final isComplete = userModel.profileComplete;
     final preferencesGiven = userModel.preferencesGiven;
 
     void _logout() async {
       await FirebaseAuth.instance.signOut();
-      userDetailsProvider.clearUser();
+      context.read<UserDetailsProvider>().clearUser();
       if (context.mounted) {
         Navigator.of(context).pushReplacementNamed("/login");
       }
@@ -70,13 +70,15 @@ class SeekerProfilePage extends StatelessWidget {
                       backgroundColor: Colors.white,
                       child: IconButton(
                         padding: EdgeInsets.zero,
-                        icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                        icon: const Icon(
+                          Icons.edit,
+                          size: 18,
+                          color: Colors.blue,
+                        ),
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (_) => ProfilePage(),
-                            ),
+                            MaterialPageRoute(builder: (_) => ProfilePage()),
                           );
                         },
                       ),

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter/material.dart';
@@ -22,120 +24,191 @@ class LocationHelper {
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      List<Placemark> placemarks =
-          await placemarkFromCoordinates(pos.latitude, pos.longitude);
-
-      String address = placemarks.isNotEmpty
-          ? "${placemarks.first.street}, ${placemarks.first.locality}, ${placemarks.first.administrativeArea}, ${placemarks.first.country}"
-          : "Unknown location";
-
-      return {
-        "lat": pos.latitude,
-        "lng": pos.longitude,
-        "address": address,
-      };
+      return await _reverseGeocode(pos.latitude, pos.longitude);
     } catch (e) {
       debugPrint("❌ Error getting location: $e");
       return null;
     }
   }
 
+  /// ✅ Reverse geocode helper
+  static Future<Map<String, dynamic>> _reverseGeocode(
+      double lat, double lng) async {
+    List<Placemark> placemarks =
+        await placemarkFromCoordinates(lat, lng);
+
+    Placemark place = placemarks.isNotEmpty ? placemarks.first : Placemark();
+
+    return {
+      "lat": lat,
+      "lng": lng,
+      "address":
+          "${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}",
+      "city": place.locality ?? "",
+      "state": place.administrativeArea ?? "",
+      "country": place.country ?? "",
+      "pincode": place.postalCode ?? "",
+    };
+  }
+
   /// ✅ Pick location manually on Google Maps
-  static Future<Map<String, dynamic>?> pickOnMap(BuildContext context) async {
+  static Future<Map<String, dynamic>?> pickOnMap(
+    BuildContext context, {
+    LatLng? initialLocation,
+  }) async {
     return await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (ctx) => _PickLocationScreen(),
+        builder: (ctx) =>
+            _PickLocationScreen(initialLocation: initialLocation),
       ),
     );
   }
 }
 
 class _PickLocationScreen extends StatefulWidget {
+  final LatLng? initialLocation;
+  const _PickLocationScreen({this.initialLocation});
+
   @override
   State<_PickLocationScreen> createState() => _PickLocationScreenState();
 }
 
 class _PickLocationScreenState extends State<_PickLocationScreen> {
-  LatLng? _selected;
-  LatLng? _currentLatLng;
   GoogleMapController? _mapController;
+  LatLng? _center;
+  String _currentAddress = "Fetching address...";
+  bool _isMoving = false;
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentLocation();
+    _initMap();
   }
 
-  Future<void> _loadCurrentLocation() async {
-    final loc = await LocationHelper.getCurrentLocation();
-    if (loc != null) {
+  Future<void> _initMap() async {
+    if (widget.initialLocation != null) {
       setState(() {
-        _currentLatLng = LatLng(loc["lat"], loc["lng"]);
+        _center = widget.initialLocation;
       });
-
-      // Move camera when map is ready
-      if (_mapController != null) {
-        _mapController!.animateCamera(
-          CameraUpdate.newLatLngZoom(_currentLatLng!, 16),
-        );
+      _updateAddressFromLatLng(widget.initialLocation!);
+    } else {
+      final loc = await LocationHelper.getCurrentLocation();
+      if (loc != null) {
+        setState(() {
+          _center = LatLng(loc["lat"], loc["lng"]);
+          _currentAddress = loc["address"];
+        });
       }
     }
+  }
+
+  Future<void> _updateAddressFromLatLng(LatLng pos) async {
+    final data =
+        await LocationHelper._reverseGeocode(pos.latitude, pos.longitude);
+    setState(() => _currentAddress = data["address"]);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Pick Location")),
-      body: _currentLatLng == null
+      body: _center == null
           ? const Center(child: CircularProgressIndicator())
-          : GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: _currentLatLng!,
-                zoom: 16,
-              ),
-              onMapCreated: (controller) {
-                _mapController = controller;
-              },
-              myLocationEnabled: true,
-              myLocationButtonEnabled: true,
-              onTap: (latLng) {
-                setState(() {
-                  _selected = latLng;
-                });
-              },
-              markers: _selected != null
-                  ? {
-                      Marker(
-                        markerId: const MarkerId("selected"),
-                        position: _selected!,
-                      )
-                    }
-                  : {},
+          : Stack(
+              alignment: Alignment.center,
+              children: [
+                /// 🌍 Map
+                GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: _center!,
+                    zoom: 17,
+                  ),
+                  onMapCreated: (controller) => _mapController = controller,
+                  myLocationEnabled: true,
+                  myLocationButtonEnabled: true,
+                  onCameraMoveStarted: () {
+                    setState(() {
+                      _isMoving = true;
+                      _currentAddress = "Moving...";
+                    });
+                  },
+                  onCameraIdle: () async {
+                    LatLng center = await _mapController!.getLatLng(
+                      ScreenCoordinate(
+                        x: MediaQuery.of(context).size.width ~/ 2,
+                        y: MediaQuery.of(context).size.height ~/ 2,
+                      ),
+                    );
+                    setState(() => _isMoving = false);
+                    _updateAddressFromLatLng(center);
+                  },
+                ),
+
+                /// 📍 Animated Center Pin
+                AnimatedPadding(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.only(bottom: _isMoving ? 20 : 0),
+                  child: const Icon(Icons.location_pin,
+                      size: 50, color: Colors.redAccent),
+                ),
+
+                /// 🪟 Glassmorphic Address Card
+                Positioned(
+                  bottom: 90,
+                  left: 20,
+                  right: 20,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: BackdropFilter(
+                      filter:
+                          ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        color: Colors.white.withOpacity(0.6),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.place, color: Colors.redAccent),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _currentAddress,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-      floatingActionButton: FloatingActionButton(
+
+      /// ✅ Confirm Button
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          if (_selected != null) {
-            List<Placemark> placemarks = await placemarkFromCoordinates(
-              _selected!.latitude,
-              _selected!.longitude,
-            );
+          LatLng center = await _mapController!.getLatLng(
+            ScreenCoordinate(
+              x: MediaQuery.of(context).size.width ~/ 2,
+              y: MediaQuery.of(context).size.height ~/ 2,
+            ),
+          );
 
-            String address = placemarks.isNotEmpty
-                ? "${placemarks.first.street}, ${placemarks.first.locality}, ${placemarks.first.administrativeArea}, ${placemarks.first.country}"
-                : "Unknown location";
+          final data =
+              await LocationHelper._reverseGeocode(center.latitude, center.longitude);
 
-            Navigator.pop(context, {
-              "lat": _selected!.latitude,
-              "lng": _selected!.longitude,
-              "address": address,
-            });
-          } else {
-            Navigator.pop(context, null);
-          }
+          Navigator.pop(context, data);
         },
-        child: const Icon(Icons.check),
+        label: const Text("Confirm Location"),
+        icon: const Icon(Icons.check),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

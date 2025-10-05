@@ -121,12 +121,15 @@ final List<String> floorOptions = [
   "Doesn’t matter",
 ];
 
-final List<String> allergyOptions = ["Dust", "Pollen", "Food", "Pets", "Other"];
+final List<String> allergyOptions = ["Dust", "Pollen", "Food", "Pets", "Other", "None"];
 
 final List<String> diseaseOptions = [
+  "None",
   "Asthma",
   "Diabetes",
   "Heart Condition",
+  "blood Pressure",
+  "Hypertension",
   "Other",
 ];
 

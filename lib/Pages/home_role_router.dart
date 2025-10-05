@@ -32,12 +32,12 @@ class HomeRoleRouter extends StatelessWidget {
     // 3️⃣ Route based on role safely
     switch (role) {
       case "user":
-        return SeekerHome(user: user);
+        return SeekerHome();
       case "roomOwner":
-        return OwnerHome(user: user);
+        return OwnerHome();
       case "admin":
       case "master":
-        return AdminHome(user: user);
+        return AdminHome();
       default:
         return const Scaffold(
           body: Center(child: Text("No valid role assigned")),

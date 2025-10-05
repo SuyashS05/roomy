@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:romy/Auth/profile_page.dart';
+import 'package:romy/Pages/User/Manage/NotificationPage.dart';
 import 'package:romy/provoiders/locale_provider.dart';
+import 'package:romy/provoiders/user_details_provider.dart';
 import 'package:romy/provoiders/user_provider.dart';
 
 import 'dashboard_page.dart';
@@ -12,8 +14,7 @@ import 'seeker_profile_page.dart';
 import '../settings_page.dart';
 
 class SeekerHome extends StatefulWidget {
-  final User user;
-  const SeekerHome({super.key, required this.user});
+  const SeekerHome({super.key});
 
   @override
   State<SeekerHome> createState() => _SeekerHomeState();
@@ -21,17 +22,7 @@ class SeekerHome extends StatefulWidget {
 
 class _SeekerHomeState extends State<SeekerHome> {
   int _index = 0;
-  late final List<Widget> pages;
-
-  @override
-  void initState() {
-    super.initState();
-    pages = [
-      DashboardPage(user: widget.user),
-      const SavedPage(),
-      const SeekerProfilePage(),
-    ];
-  }
+  late List<Widget> pages;
 
   void _logout() async {
     final userProvider = context.read<UserProvider>();
@@ -44,9 +35,19 @@ class _SeekerHomeState extends State<SeekerHome> {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = context.watch<UserProvider>();
-    final localeProvider = context.watch<LocaleProvider>(); // listen to locale
-    final user = userProvider.firebaseUser ?? widget.user;
+    final localeProvider = context.watch<LocaleProvider>();
+    final userDetails = context.watch<UserDetailsProvider>().user;
+
+    final pages = [
+      if (userDetails != null) DashboardPage(user: userDetails),
+      const SavedPage(),
+      const SeekerProfilePage(),
+    ];
+
+    if (userDetails == null) {
+      // Show loading until userDetails is fetched
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -55,8 +56,9 @@ class _SeekerHomeState extends State<SeekerHome> {
           IconButton(
             icon: const Icon(Icons.notifications),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("no_new_notifications".tr())),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => NotificationPage()),
               );
             },
           ),
@@ -76,17 +78,14 @@ class _SeekerHomeState extends State<SeekerHome> {
           padding: EdgeInsets.zero,
           children: [
             UserAccountsDrawerHeader(
-              accountName: Text(user.displayName ?? "guest_user".tr()),
-              accountEmail: Text(user.email ?? ""),
+              accountName: Text(userDetails.displayName ?? "guest_user".tr()),
+              accountEmail: Text(userDetails.email ?? ""),
               currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Text(
-                  (user.email ?? "U")[0].toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                radius: 30,
+                backgroundImage:
+                    userDetails.profileUrl != null
+                        ? NetworkImage(userDetails.profileUrl!)
+                        : const AssetImage('assets/admin.png') as ImageProvider,
               ),
             ),
             ListTile(
@@ -125,8 +124,11 @@ class _SeekerHomeState extends State<SeekerHome> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.exit_to_app),
-              title: Text("logout".tr()),
+              leading: const Icon(Icons.exit_to_app, color: Colors.red),
+              title: Text(
+                "logout".tr(),
+                style: const TextStyle(color: Colors.red),
+              ),
               onTap: _logout,
             ),
           ],
@@ -154,3 +156,18 @@ class _SeekerHomeState extends State<SeekerHome> {
     );
   }
 }
+
+
+// @override
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
+  //   final userDetails =
+  //       context.watch<UserDetailsProvider>().user; // ✅ get Firestore user
+
+  //   // Initialize pages once userDetails is available
+  //   pages = [
+  //     if (userDetails != null) DashboardPage(user: userDetails),
+  //     const SavedPage(),
+  //     const SeekerProfilePage(),
+  //   ];
+  // }

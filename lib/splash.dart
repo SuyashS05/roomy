@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:romy/pages/home_role_router.dart';
+import 'package:provider/provider.dart';
+import 'package:romy/provoiders/user_details_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -38,13 +40,15 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
     )..repeat(reverse: true);
 
-    _fadeAnimation = Tween<double>(begin: 0.5, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.5,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
-    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.9,
+      end: 1.1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     // Gradient change every 0.5s
     Timer.periodic(const Duration(milliseconds: 500), (timer) {
@@ -57,11 +61,18 @@ class _SplashScreenState extends State<SplashScreen>
     Timer(const Duration(seconds: 4), _navigate);
   }
 
-  void _navigate() {
+  void _navigate() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    if (user == null || !user.emailVerified) {
       Navigator.pushReplacementNamed(context, "/login");
     } else {
+      // 🔹 tell UserDetailsProvider to listen again
+      final userDetailsProvider = Provider.of<UserDetailsProvider>(
+        context,
+        listen: false,
+      );
+      await userDetailsProvider.listenToUser(user);
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeRoleRouter()),
