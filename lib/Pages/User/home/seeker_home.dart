@@ -40,7 +40,7 @@ class _SeekerHomeState extends State<SeekerHome> {
 
     final pages = [
       if (userDetails != null) DashboardPage(user: userDetails),
-      const SavedPage(),
+      SavedPage(user: userDetails!),
       const SeekerProfilePage(),
     ];
 

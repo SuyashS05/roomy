@@ -37,6 +37,7 @@ Future<List<Map<String, dynamic>>> fetchNearbyListings(
 
     if (distance <= 2) {
       data['distance'] = distance; // optional: store distance
+      data['id'] = doc.id;
       nearby.add(data);
     }
 

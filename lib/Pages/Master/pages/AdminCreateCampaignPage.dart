@@ -27,7 +27,10 @@ class _AdminCreateCampaignPageState extends State<AdminCreateCampaignPage> {
   }
 
   Future<void> _loadCampaign() async {
-    final doc = await FirebaseFirestore.instance.collection("campaigns").doc(widget.campaignId).get();
+    final doc = await FirebaseFirestore.instance
+        .collection("campaigns")
+        .doc(widget.campaignId)
+        .get();
     if (doc.exists) {
       final data = doc.data()!;
       _title.text = data['title'];
@@ -48,6 +51,101 @@ class _AdminCreateCampaignPageState extends State<AdminCreateCampaignPage> {
         _location.text = loc["address"];
       });
     }
+  }
+
+  /// 🖼️ Opens a bottom sheet to pick an image from Firestore (app_images)
+  Future<void> _selectImageFromAppImages() async {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              const Text(
+                "Select an App Image",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('app_images')
+                      .orderBy('addedAt', descending: true)
+                      .snapshots(),
+                  builder: (ctx, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(child: Text("No app images available."));
+                    }
+
+                    final docs = snapshot.data!.docs;
+
+                    return GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                        childAspectRatio: 0.9,
+                      ),
+                      itemCount: docs.length,
+                      itemBuilder: (ctx, i) {
+                        final doc = docs[i];
+                        final url = doc['url'] as String;
+                        final title = doc['title'] ?? '';
+
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _imageUrl.text = url;
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  image: DecorationImage(
+                                    image: NetworkImage(url),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  color: Colors.black.withOpacity(0.5),
+                                  padding: const EdgeInsets.all(4),
+                                  child: Text(
+                                    title,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _saveCampaign() async {
@@ -72,7 +170,10 @@ class _AdminCreateCampaignPageState extends State<AdminCreateCampaignPage> {
       data["createdAt"] = DateTime.now();
       await FirebaseFirestore.instance.collection("campaigns").add(data);
     } else {
-      await FirebaseFirestore.instance.collection("campaigns").doc(widget.campaignId).update(data);
+      await FirebaseFirestore.instance
+          .collection("campaigns")
+          .doc(widget.campaignId)
+          .update(data);
     }
 
     setState(() => _loading = false);
@@ -82,7 +183,8 @@ class _AdminCreateCampaignPageState extends State<AdminCreateCampaignPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.campaignId == null ? "Create Campaign" : "Edit Campaign")),
+      appBar:
+          AppBar(title: Text(widget.campaignId == null ? "Create Campaign" : "Edit Campaign")),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
@@ -92,11 +194,31 @@ class _AdminCreateCampaignPageState extends State<AdminCreateCampaignPage> {
             TextField(controller: _location, decoration: const InputDecoration(labelText: "Location")),
             TextField(controller: _imageUrl, decoration: const InputDecoration(labelText: "Image URL")),
             const SizedBox(height: 8),
-            ElevatedButton.icon(
-              onPressed: _pickOnMap,
-              icon: const Icon(Icons.map),
-              label: const Text("Pick on Map"),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _selectImageFromAppImages,
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text("Select from App Images"),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _pickOnMap,
+                    icon: const Icon(Icons.map),
+                    label: const Text("Pick on Map"),
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 16),
+            if (_imageUrl.text.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(_imageUrl.text, height: 150, fit: BoxFit.cover),
+              ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loading ? null : _saveCampaign,

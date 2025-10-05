@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:romy/Helpers/ListignsSaveRatingHelper.dart';
 import 'package:romy/Helpers/nearbyListing.dart';
 import 'package:romy/Models/Users.dart';
 import 'package:romy/Pages/ListingsMap.dart';
+import 'package:romy/Pages/PgOwner/Pages/HomeDetailsPage.dart';
+import 'package:romy/Pages/PgOwner/Pages/HostelDetailsPage.dart';
+import 'package:romy/Pages/PgOwner/Pages/PgDetailsPage.dart';
 import 'package:romy/Pages/User/Manage/MessagesPage.dart';
 import 'package:romy/Pages/User/Manage/ProfileSetting.dart';
 import 'package:romy/Pages/User/Manage/UserSupportPage.dart';
@@ -40,7 +44,10 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     try {
-      final listings = await fetchNearbyListings(widget.user.lat!, widget.user.lng!);
+      final listings = await fetchNearbyListings(
+        widget.user.lat!,
+        widget.user.lng!,
+      );
       if (mounted) {
         setState(() {
           recommendedListings = listings;
@@ -64,8 +71,10 @@ class _DashboardPageState extends State<DashboardPage> {
             // 🔹 Map preview container
             GestureDetector(
               onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => ListingsMap()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ListingsMap()),
+                );
               },
               child: const MapPreviewWidget(),
             ),
@@ -120,8 +129,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) =>
-                              ProfileSettingsPage(user: widget.user)),
+                        builder: (_) => ProfileSettingsPage(user: widget.user),
+                      ),
                     );
                   },
                 ),
@@ -173,18 +182,7 @@ class _DashboardPageState extends State<DashboardPage> {
             if (!isLoading && recommendedListings.isEmpty)
               Center(child: Text(tr("no_nearby_listings"))),
 
-            ...recommendedListings.map(
-              (listing) => _buildRoomCard(
-                listing['title'] ?? tr("unknown_room"),
-                "₹${listing['basePrice'] ?? 'N/A'}/month",
-                listing['amenities'] != null
-                    ? (listing['amenities'] as Map).keys.join(" • ")
-                    : "",
-                listing['images'] != null && listing['images'].isNotEmpty
-                    ? listing['images'][0]
-                    : "https://picsum.photos/200",
-              ),
-            ),
+            ...recommendedListings.map((listing) => _buildRoomCard(listing)),
           ],
         ),
       ),
@@ -199,8 +197,9 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Card(
               elevation: 4,
-              shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(15),
                 child: Image.asset(
@@ -223,8 +222,11 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildActionCard(
-      IconData icon, String title, Color color,
-      {VoidCallback? onTap}) {
+    IconData icon,
+    String title,
+    Color color, {
+    VoidCallback? onTap,
+  }) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 4,
@@ -239,7 +241,10 @@ class _DashboardPageState extends State<DashboardPage> {
               const SizedBox(height: 8),
               Text(
                 title,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
@@ -248,43 +253,160 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildRoomCard(String title, String price, String details, String imageUrl) {
+  Widget _buildRoomCard(Map<String, dynamic> listing) {
+    final id = listing['id'];
+    if (id == null) return SizedBox.shrink();
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 5,
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius:
-                const BorderRadius.horizontal(left: Radius.circular(16)),
-            child: Image.network(
-              imageUrl,
-              width: 100,
-              height: 100,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style:
-                          const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(price,
-                      style: const TextStyle(fontSize: 14, color: Colors.green)),
-                  const SizedBox(height: 4),
-                  Text(details,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                ],
+      child: InkWell(
+        onTap: () {
+          final type = listing['type'] ?? 'hostel';
+          Widget detailsPage;
+          if (type == "home") {
+            detailsPage = HomeDetailsPage(listingId: id);
+          } else if (type == "pg") {
+            detailsPage = PgDetailsPage(listingId: id);
+          } else {
+            detailsPage = HostelDetailsPage(listingId: id);
+          }
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => detailsPage),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(16),
+              ),
+              child: Image.network(
+                (listing['images'] != null && listing['images'].isNotEmpty)
+                    ? listing['images'][0]
+                    : "https://picsum.photos/200",
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
               ),
             ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      listing['title'] ?? "Unknown Room",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "₹${listing['basePrice'] ?? 'N/A'}/month",
+                      style: const TextStyle(fontSize: 14, color: Colors.green),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      listing['amenities'] != null
+                          ? (listing['amenities'] as Map).keys.join(" • ")
+                          : "",
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+  children: [
+    // ⭐ Interactive 5-star rating
+    StatefulBuilder(
+      builder: (context, setStateStar) {
+        double currentRating = listing['userRating'] ?? 0.0;
+        return Row(
+          children: List.generate(5, (index) {
+            return GestureDetector(
+              onTap: () async {
+                double newRating = index + 1.0;
+                await rateListing(
+                  listingId: id,
+                  userId: widget.user.uid!,
+                  rating: newRating,
+                );
+                setStateStar(() {
+                  currentRating = newRating;
+                  listing['userRating'] = newRating;
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Rated $newRating stars successfully")),
+                );
+              },
+              child: Icon(
+                index < currentRating ? Icons.star : Icons.star_border,
+                color: Colors.amber,
+                size: 20, // smaller star size
+              ),
+            );
+          }).map((widget) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2.0),
+            child: widget,
+          )).toList(),
+        );
+      },
+    ),
+
+    const SizedBox(width: 12),
+
+    // 💾 Save / unsave toggle
+    StatefulBuilder(
+      builder: (context, setStateSave) {
+        bool isSaved = listing['isSaved'] ?? false;
+        return GestureDetector(
+          onTap: () async {
+            if (!isSaved) {
+              await saveListing(
+                userId: widget.user.uid!,
+                listingId: id,
+                listingData: {
+                  'title': listing['title'],
+                  'image': (listing['images'] != null && listing['images'].isNotEmpty)
+                      ? listing['images'][0]
+                      : null,
+                },
+              );
+            } else {
+              await unsaveListing(userId: widget.user.uid!, listingId: id);
+            }
+
+            setStateSave(() {
+              isSaved = !isSaved;
+              listing['isSaved'] = isSaved;
+            });
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(isSaved ? "Saved" : "Removed from saved")),
+            );
+          },
+          child: Icon(
+            isSaved ? Icons.bookmark : Icons.bookmark_border,
+            color: isSaved ? Colors.green : Colors.grey,
+            size: 24,
           ),
-        ],
+        );
+      },
+    ),
+  ],
+),
+
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

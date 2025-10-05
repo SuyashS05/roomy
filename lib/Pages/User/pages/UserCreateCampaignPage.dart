@@ -40,6 +40,101 @@ class _UserCreateCampaignPageState extends State<UserCreateCampaignPage> {
     }
   }
 
+  /// 🖼️ Opens a bottom sheet grid of images from Firestore (app_images)
+  Future<void> _selectImageFromAppImages() async {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              const Text(
+                "Select an App Image",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('app_images')
+                      .orderBy('addedAt', descending: true)
+                      .snapshots(),
+                  builder: (ctx, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(child: Text("No app images available."));
+                    }
+
+                    final docs = snapshot.data!.docs;
+
+                    return GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                        childAspectRatio: 0.9,
+                      ),
+                      itemCount: docs.length,
+                      itemBuilder: (ctx, i) {
+                        final doc = docs[i];
+                        final url = doc['url'] as String;
+                        final title = doc['title'] ?? '';
+
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _imageUrl.text = url;
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  image: DecorationImage(
+                                    image: NetworkImage(url),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  color: Colors.black.withOpacity(0.5),
+                                  padding: const EdgeInsets.all(4),
+                                  child: Text(
+                                    title,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _imagePreview() {
     final url = _imageUrl.text.trim();
     if (url.isEmpty) return const SizedBox.shrink();
@@ -87,7 +182,7 @@ class _UserCreateCampaignPageState extends State<UserCreateCampaignPage> {
       "location": _location.text.trim(),
       "lat": _lat,
       "lng": _lng,
-      "imageUrl": _imageUrl.text.trim(), // <-- image url saved here (can be empty)
+      "imageUrl": _imageUrl.text.trim(),
       "createdBy": user.uid,
       "createdByRole": "user",
       "createdAt": DateTime.now(),
@@ -141,14 +236,28 @@ class _UserCreateCampaignPageState extends State<UserCreateCampaignPage> {
                 hintText: "https://example.com/image.jpg",
               ),
               keyboardType: TextInputType.url,
-              onChanged: (_) => setState(() {}), // refresh preview
+              onChanged: (_) => setState(() {}),
             ),
             _imagePreview(),
             const SizedBox(height: 8),
-            ElevatedButton.icon(
-              onPressed: _pickOnMap,
-              icon: const Icon(Icons.map),
-              label: const Text("Pick on Map"),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _selectImageFromAppImages,
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text("Select from App Images"),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _pickOnMap,
+                    icon: const Icon(Icons.map),
+                    label: const Text("Pick on Map"),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             ElevatedButton(
