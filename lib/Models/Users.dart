@@ -80,6 +80,7 @@ class UserModel {
 
   Map<String, dynamic> toMap() {
     return {
+      'user': uid,
       'displayName': displayName,
       'profileUrl': profileUrl,
       'role': role,

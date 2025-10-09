@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 
 class PgDetailsPage extends StatelessWidget {
   final String listingId;
+  final bool isOwnerAccess;
+  final String? ownerUid;
 
-  const PgDetailsPage({super.key, required this.listingId});
+  const PgDetailsPage({
+    Key? key,
+    required this.listingId,
+    this.isOwnerAccess = false,
+    this.ownerUid,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

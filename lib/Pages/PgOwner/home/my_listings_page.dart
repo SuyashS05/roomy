@@ -365,19 +365,33 @@ class MyListingsPage extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        // ✅ Choose the details page based on type
         Widget detailsPage;
+
+        final isOwnerAccess = currentUser.uid == ownerUid || isAdminOrMaster;
+
         if (type == "home") {
-          detailsPage = HomeDetailsPage(listingId: listingId);
+          detailsPage = HomeDetailsPage(
+            listingId: listingId,
+            isOwnerAccess: isOwnerAccess,
+            ownerUid: ownerUid,
+          );
         } else if (type == "pg") {
-          detailsPage = PgDetailsPage(listingId: listingId);
+          detailsPage = PgDetailsPage(
+            listingId: listingId,
+            isOwnerAccess: isOwnerAccess,
+            ownerUid: ownerUid,
+          );
         } else {
-          // default to hostel if nothing matches
-          detailsPage = HostelDetailsPage(listingId: listingId);
+          detailsPage = HostelDetailsPage(
+            listingId: listingId,
+            isOwnerAccess: isOwnerAccess,
+            ownerUid: ownerUid,
+          );
         }
 
         Navigator.push(context, MaterialPageRoute(builder: (_) => detailsPage));
       },
+
       child: Card(
         margin: const EdgeInsets.only(bottom: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

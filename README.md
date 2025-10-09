@@ -136,7 +136,6 @@ Roomie is a comprehensive platform designed to simplify the process of finding r
 </div>
 
 
-
 ---
 
 ## 📄 License

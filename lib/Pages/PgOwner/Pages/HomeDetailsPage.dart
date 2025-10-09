@@ -7,7 +7,15 @@ import 'package:romy/Pages/notFoundPage.dart';
 
 class HomeDetailsPage extends StatefulWidget {
   final String listingId;
-  const HomeDetailsPage({Key? key, required this.listingId}) : super(key: key);
+  final bool isOwnerAccess;
+  final String? ownerUid;
+
+  const HomeDetailsPage({
+    Key? key,
+    required this.listingId,
+    this.isOwnerAccess = false, // default false for normal users
+    this.ownerUid,
+  }) : super(key: key);
 
   @override
   State<HomeDetailsPage> createState() => _HomeDetailsPageState();
