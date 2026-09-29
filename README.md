@@ -52,7 +52,7 @@ Roomie is a comprehensive platform designed to simplify the process of finding r
 
 ### Prerequisites
 
-* Flutter 3.4 or higher
+* Flutter SDK providing Dart 3.7.2 or newer
 
 * Firebase account with Firestore and Firebase Storage enabled
 
@@ -101,42 +101,32 @@ Roomie is a comprehensive platform designed to simplify the process of finding r
 
 ## 📸 Screenshots
 
-![Home Screen](assets/img/1.png)
-
-![Room Matching](assets/img/2.png)
-
-![Chat Interface](assets/img/3.png)
-
-## 📸 Screenshots
-
-<div style="display: flex; flex-wrap: wrap; gap: 10px; overflow-x: auto;">
-
-<img src="assets/img/1.png" width="200" />
-<img src="assets/img/2.png" width="200" />
-<img src="assets/img/3.png" width="200" />
-<img src="assets/img/4.png" width="200" />
-<img src="assets/img/5.png" width="200" />
-<img src="assets/img/6.png" width="200" />
-<img src="assets/img/7.png" width="200" />
-<img src="assets/img/8.png" width="200" />
-<img src="assets/img/9.png" width="200" />
-<img src="assets/img/10.png" width="200" />
-<img src="assets/img/11.png" width="200" />
-<img src="assets/img/12.png" width="200" />
-<img src="assets/img/13.png" width="200" />
-<img src="assets/img/14.png" width="200" />
-<img src="assets/img/15.png" width="200" />
-<img src="assets/img/16.png" width="200" />
-<img src="assets/img/17.png" width="200" />
-<img src="assets/img/18.png" width="200" />
-<img src="assets/img/19.png" width="200" />
-<img src="assets/img/20.png" width="200" />
-<img src="assets/img/21.png" width="200" />
-<img src="assets/img/22.png" width="200" />
-<img src="assets/img/23.png" width="200" />
-<img src="assets/img/24.png" width="200" />
-<img src="assets/img/25.png" width="200" />
-
+<div align="center">
+<img src="assets/img/1.png" width="180" alt="App screenshot 1" />
+<img src="assets/img/2.jpeg" width="180" alt="App screenshot 2" />
+<img src="assets/img/3.jpeg" width="180" alt="App screenshot 3" />
+<img src="assets/img/4.jpeg" width="180" alt="App screenshot 4" />
+<img src="assets/img/5.jpeg" width="180" alt="App screenshot 5" />
+<img src="assets/img/6.jpeg" width="180" alt="App screenshot 6" />
+<img src="assets/img/7.jpeg" width="180" alt="App screenshot 7" />
+<img src="assets/img/8.jpeg" width="180" alt="App screenshot 8" />
+<img src="assets/img/9.jpeg" width="180" alt="App screenshot 9" />
+<img src="assets/img/10.jpeg" width="180" alt="App screenshot 10" />
+<img src="assets/img/11.jpeg" width="180" alt="App screenshot 11" />
+<img src="assets/img/12.jpeg" width="180" alt="App screenshot 12" />
+<img src="assets/img/13.jpeg" width="180" alt="App screenshot 13" />
+<img src="assets/img/14.jpeg" width="180" alt="App screenshot 14" />
+<img src="assets/img/15.jpeg" width="180" alt="App screenshot 15" />
+<img src="assets/img/16.jpeg" width="180" alt="App screenshot 16" />
+<img src="assets/img/17.jpeg" width="180" alt="App screenshot 17" />
+<img src="assets/img/18.jpeg" width="180" alt="App screenshot 18" />
+<img src="assets/img/19.jpeg" width="180" alt="App screenshot 19" />
+<img src="assets/img/20.jpeg" width="180" alt="App screenshot 20" />
+<img src="assets/img/21.jpeg" width="180" alt="App screenshot 21" />
+<img src="assets/img/22.jpeg" width="180" alt="App screenshot 22" />
+<img src="assets/img/23.jpeg" width="180" alt="App screenshot 23" />
+<img src="assets/img/24.jpeg" width="180" alt="App screenshot 24" />
+<img src="assets/img/25.jpeg" width="180" alt="App screenshot 25" />
 </div>
 
 
