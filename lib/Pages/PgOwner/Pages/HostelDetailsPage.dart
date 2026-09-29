@@ -253,6 +253,8 @@ class _HostelDetailsPageState extends State<HostelDetailsPage> {
         "roomId": roomKey,
         "cotId": cotKey,
         "userUid": user.uid,
+        "userName": user.displayName ?? "",
+        "contactNumber": user.phone ?? "",
         "ownerUid": listing!["ownerUid"],
         "status": "pending",
         "createdAt": FieldValue.serverTimestamp(),
@@ -428,6 +430,7 @@ class _HostelDetailsPageState extends State<HostelDetailsPage> {
                   const Divider(height: 30),
                   BookingRequestsSection(
                     hostelId: hostelId,
+                    ownerUid: listing!["ownerUid"],
                     isOwner: isOwner,
                     onAction:
                         (requestId, req) =>

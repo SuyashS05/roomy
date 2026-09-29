@@ -9,7 +9,7 @@ Widget buildRoomOwnerCard(
   String status,
   String name,
   Timestamp? submittedAt,
-  void Function(String url, String title) showDocument,
+  void Function(String path, String title) showDocument,
   void Function(String uid, bool approve, {String reason}) updateVerification,
   void Function(String whatsapp) launchWhatsApp,
   void Function(String whatsapp) launchCall, {
@@ -77,7 +77,7 @@ Widget buildRoomOwnerCard(
 
           // ===== DOCUMENTS =====
           if ((owner["aadhaarNumber"] ?? "").isNotEmpty ||
-              (owner["addressProofUrl"] ?? "").isNotEmpty)
+              (owner["addressProofPath"] ?? "").isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Row(
@@ -89,7 +89,7 @@ Widget buildRoomOwnerCard(
                       style: const TextStyle(fontSize: 13),
                     ),
                   const SizedBox(height: 6),
-                  if ((owner["addressProofUrl"] ?? "").isNotEmpty)
+                  if ((owner["addressProofPath"] ?? "").isNotEmpty)
                     OutlinedButton.icon(
                       icon: const Icon(
                         Icons.picture_as_pdf,
@@ -98,7 +98,7 @@ Widget buildRoomOwnerCard(
                       label: const Text("View Address Proof"),
                       onPressed:
                           () => showDocument(
-                            owner["addressProofUrl"],
+                            owner["addressProofPath"],
                             "Address Proof",
                           ),
                     ),

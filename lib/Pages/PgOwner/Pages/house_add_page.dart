@@ -189,7 +189,6 @@ class _HomeAddPageState extends State<HomeAddPage> {
     }
   }
 
-
   Future<void> _pickImages() async {
     final pickedFiles = await _picker.pickMultiImage();
     for (var file in pickedFiles) {
@@ -200,7 +199,7 @@ class _HomeAddPageState extends State<HomeAddPage> {
 
   Future<String> _uploadImage(File file) async {
     final ref = FirebaseStorage.instance.ref(
-      "homes/${widget.editListingId ?? DateTime.now().millisecondsSinceEpoch}/${DateTime.now().millisecondsSinceEpoch}.jpg",
+      "listing_images/${widget.owner.uid}/${DateTime.now().millisecondsSinceEpoch}.jpg",
     );
     await ref.putFile(file);
     return await ref.getDownloadURL();

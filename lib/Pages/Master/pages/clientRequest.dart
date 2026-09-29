@@ -6,6 +6,7 @@ import 'package:romy/Pages/Master/pages/RoomOwnerDetails.dart';
 import 'package:romy/provoiders/user_details_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:romy/Pages/Master/pages/ClientRequestCard.dart';
+import 'package:romy/Helpers/private_storage_image.dart';
 
 class ClientRequestsPage extends StatefulWidget {
   const ClientRequestsPage({super.key});
@@ -15,7 +16,6 @@ class ClientRequestsPage extends StatefulWidget {
 }
 
 class _ClientRequestsPageState extends State<ClientRequestsPage> {
-  
   final _searchController = TextEditingController();
   String _searchQuery = "";
 
@@ -49,17 +49,9 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
     });
   }
 
-  void _showDocument(String url, String title) {
-    if (url.isEmpty) return;
-    showDialog(
-      context: context,
-      builder:
-          (_) => Dialog(
-            child: InteractiveViewer(
-              child: Image.network(url, fit: BoxFit.contain),
-            ),
-          ),
-    );
+  void _showDocument(String path, String title) {
+    if (path.isEmpty) return;
+    showPrivateStorageImageDialog(context, path, title);
   }
 
   bool _matchesSearch(Map<String, dynamic> owner, Map<String, dynamic>? user) {

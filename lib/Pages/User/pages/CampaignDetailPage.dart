@@ -121,7 +121,7 @@ class _CampaignDetailPageState extends State<CampaignDetailPage> {
       // Try by field 'createdBy' or by doc ID - we'll query both
       final q1 =
           await FirebaseFirestore.instance
-              .collection('roomFinders')
+              .collection('roomFinderProfiles')
               .where('createdBy', whereIn: b)
               .get();
       candidateDocs.addAll(q1.docs);
@@ -130,7 +130,7 @@ class _CampaignDetailPageState extends State<CampaignDetailPage> {
       for (final uid in b) {
         final doc =
             await FirebaseFirestore.instance
-                .collection('roomFinders')
+                .collection('roomFinderProfiles')
                 .doc(uid)
                 .get();
         if (doc.exists) candidateDocs.add(doc);
@@ -580,10 +580,17 @@ class _CampaignDetailPageState extends State<CampaignDetailPage> {
                                     candData['profileurl'] ??
                                     '')
                                 as String?;
-                        return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                          future: FirebaseFirestore.instance.collection('users').doc(m.uid).get(),
+                        return FutureBuilder<
+                          DocumentSnapshot<Map<String, dynamic>>
+                        >(
+                          future:
+                              FirebaseFirestore.instance
+                                  .collection('roomFinderProfiles')
+                                  .doc(m.uid)
+                                  .get(),
                           builder: (context, userSnap) {
-                            if (userSnap.connectionState == ConnectionState.waiting) {
+                            if (userSnap.connectionState ==
+                                ConnectionState.waiting) {
                               return const ListTile(title: Text('Loading...'));
                             }
                             if (!userSnap.hasData || !userSnap.data!.exists) {
@@ -591,7 +598,10 @@ class _CampaignDetailPageState extends State<CampaignDetailPage> {
                             }
 
                             final userData = userSnap.data!.data()!;
-                            final name = userData['displayName'] ?? userData['userName'] ?? m.uid;
+                            final name =
+                                userData['displayName'] ??
+                                userData['userName'] ??
+                                m.uid;
                             final avatar = userData['profileUrl'] ?? '';
 
                             return Card(
@@ -599,14 +609,26 @@ class _CampaignDetailPageState extends State<CampaignDetailPage> {
                               child: ExpansionTile(
                                 leading: CircleAvatar(
                                   radius: 24,
-                                  backgroundImage: avatar.isNotEmpty ? NetworkImage(avatar) : null,
-                                  child: avatar.isEmpty ? const Icon(Icons.person) : null,
+                                  backgroundImage:
+                                      avatar.isNotEmpty
+                                          ? NetworkImage(avatar)
+                                          : null,
+                                  child:
+                                      avatar.isEmpty
+                                          ? const Icon(Icons.person)
+                                          : null,
                                 ),
                                 title: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(child: Text(name)),
-                                    Text('${(m.score * 100).toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    Text(
+                                      '${(m.score * 100).toStringAsFixed(1)}%',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 trailing: ElevatedButton(
@@ -614,17 +636,27 @@ class _CampaignDetailPageState extends State<CampaignDetailPage> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => UserDetailsPage(userId: m.uid),
+                                        builder:
+                                            (_) =>
+                                                UserDetailsPage(userId: m.uid),
                                       ),
                                     );
                                   },
                                   child: const Text('View'),
                                 ),
-                                childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                childrenPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
                                 children: [
-                                  LinearProgressIndicator(value: m.score.clamp(0.0, 1.0)),
+                                  LinearProgressIndicator(
+                                    value: m.score.clamp(0.0, 1.0),
+                                  ),
                                   const SizedBox(height: 8),
-                                  _buildMatchHints(candidate: candData, currentRf: null),
+                                  _buildMatchHints(
+                                    candidate: candData,
+                                    currentRf: null,
+                                  ),
                                 ],
                               ),
                             );
