@@ -12,6 +12,26 @@
 .swiftpm/
 migrate_working_dir/
 .env
+.env.*
+!.env.example
+!.env.template
+
+# Firebase client config files are generated per app and contain public client values.
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Never commit Firebase Admin SDK credentials.
+**/*service-account*.json
+**/*ServiceAccount*.json
+**/firebase-adminsdk-*.json
+
+# Private signing keys and certificates.
+*.jks
+*.keystore
+*.pem
+*.p12
+*.pfx
+*.key
 
 # IntelliJ related
 *.iml
