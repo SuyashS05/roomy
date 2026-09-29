@@ -38,7 +38,7 @@ class SettingsPage extends StatelessWidget {
               title: Text('dark_mode'.tr()),
               trailing: Switch(
                 value: themeProvider.themeMode == ThemeMode.dark,
-                onChanged: (_) => themeProvider.toggleTheme(),
+                onChanged: (_) => Provider.of<ThemeProvider>(context, listen: false).toggleTheme(),
                 activeColor: Colors.blueAccent,
               ),
             ),

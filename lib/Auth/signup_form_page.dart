@@ -19,28 +19,31 @@ class _SignupFormPageState extends State<SignupFormPage> {
 
   Future<void> _signup() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      // Create user (temporary until verification done)
       final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text.trim(),
       );
 
-      // Send verification email
       await cred.user!.sendEmailVerification();
 
-      // Go to verification page. We'll keep the auth user until they verify or cancel.
       if (!mounted) return;
-      Navigator.pushReplacement(context, MaterialPageRoute(
-        builder: (_) => VerifyEmailPage(selectedRole: widget.selectedRole),
-      ));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => VerifyEmailPage(selectedRole: widget.selectedRole),
+        ),
+      );
     } on FirebaseAuthException catch (e) {
-      setState(() { _error = e.message; });
+      setState(() => _error = e.message);
     } catch (e) {
-      setState(() { _error = 'Unexpected error'; });
+      setState(() => _error = 'Unexpected error');
     } finally {
-      setState(() { _loading = false; });
+      setState(() => _loading = false);
     }
   }
 
@@ -53,37 +56,161 @@ class _SignupFormPageState extends State<SignupFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Signup')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(children: [
-          Text('Role: ${widget.selectedRole}', style: const TextStyle(fontSize: 16)),
-          const SizedBox(height: 12),
-          Form(
-            key: _formKey,
-            child: Column(children: [
-              TextFormField(
-                controller: _emailCtrl,
-                decoration: const InputDecoration(labelText: 'Email'),
-                validator: (v) => v!=null && v.contains('@') ? null : 'Enter valid email',
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF74ABE2), Color(0xFF5563DE)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+            child: Card(
+              elevation: 10,
+              color: Colors.white.withOpacity(0.95),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
               ),
-              TextFormField(
-                controller: _passCtrl,
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                validator: (v) => v!=null && v.length>=6 ? null : '6+ chars',
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Hero(
+                      tag: 'app_logo',
+                      child: Image.asset(
+                        'assets/Logo.png',
+                        height: 100,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Signup',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF3C4F9A),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Role: ${widget.selectedRole}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // --- Form ---
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _emailCtrl,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                              labelText: 'Email',
+                              prefixIcon: const Icon(Icons.email_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            validator: (v) => v != null && v.contains('@')
+                                ? null
+                                : 'Enter a valid email',
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _passCtrl,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                              labelText: 'Password',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            validator: (v) => v != null && v.length >= 6
+                                ? null
+                                : 'Password must be 6+ chars',
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    if (_error != null)
+                      Text(
+                        _error!,
+                        style: const TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: 13,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+
+                    const SizedBox(height: 20),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _loading ? null : _signup,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5563DE),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 6,
+                        ),
+                        child: _loading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                'Create Account & Send Verification',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        '← Back',
+                        style: TextStyle(
+                          color: Color(0xFF3C4F9A),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
-              if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: _loading ? null : _signup,
-                child: _loading ? const CircularProgressIndicator() : const Text('Create account & Send Verification'),
-              )
-            ]),
-          )
-        ]),
+            ),
+          ),
+        ),
       ),
     );
   }
