@@ -48,33 +48,16 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     if (reloadedUser != null && reloadedUser.emailVerified) {
       await _createUserDocAndGotoHome(reloadedUser);
     } else {
-      setState(() => _status =
-          'Email not yet verified. Please click the link in your email and then press "I have verified".');
+      setState(
+        () =>
+            _status =
+                'Email not yet verified. Please click the link in your email and then press "I have verified".',
+      );
     }
     setState(() => _busy = false);
   }
 
-  /// 🔹 This handles Firestore transaction to generate continuous userId
-  Future<int> _generateUserId() async {
-    final counterRef =
-        FirebaseFirestore.instance.collection("counters").doc("userId");
-
-    return FirebaseFirestore.instance.runTransaction<int>((transaction) async {
-      final snapshot = await transaction.get(counterRef);
-
-      int currentId = snapshot.exists ? snapshot["lastUserId"] : 100000;
-      int newId = currentId + 1;
-
-      transaction.set(counterRef, {"lastUserId": newId}, SetOptions(merge: true));
-
-      return newId;
-    });
-  }
-
   Future<void> _createUserDocAndGotoHome(User user) async {
-    // ✅ Generate sequential userId
-    final newUserId = await _generateUserId();
-
     // ✅ Get device token for push notifications
     String? deviceToken;
     try {
@@ -86,7 +69,6 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     // ✅ Store user in Firestore
     final doc = FirebaseFirestore.instance.collection('users').doc(user.uid);
     await doc.set({
-      'userId': newUserId, // 🔹 Sequential custom user ID
       'email': user.email,
       'role': widget.selectedRole,
       'createdAt': FieldValue.serverTimestamp(),
@@ -120,12 +102,16 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
           .doc(user.uid)
           .delete()
           .catchError((_) {});
-      setState(() =>
-          _status = 'Signup canceled and temporary account deleted.');
+      setState(
+        () => _status = 'Signup canceled and temporary account deleted.',
+      );
       Navigator.popUntil(context, (route) => route.isFirst);
     } on FirebaseAuthException catch (e) {
-      setState(() => _status =
-          'Failed to delete account: ${e.message}. Please try again.');
+      setState(
+        () =>
+            _status =
+                'Failed to delete account: ${e.message}. Please try again.',
+      );
     } finally {
       setState(() => _busy = false);
     }
@@ -138,39 +124,47 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
       appBar: AppBar(title: const Text('Verify your email')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(children: [
-          Text('Verification sent to: $email'),
-          const SizedBox(height: 12),
-          const Text(
-              'Open email and click the verification link. Then come back and press "I have verified".'),
-          const SizedBox(height: 12),
-          if (_status != null)
-            Text(_status!, style: const TextStyle(color: Colors.green)),
-          const SizedBox(height: 12),
-          Row(children: [
-            ElevatedButton(
-              onPressed: _busy ? null : _resend,
-              child: _busy
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(),
-                    )
-                  : const Text('Resend'),
+        child: Column(
+          children: [
+            Text('Verification sent to: $email'),
+            const SizedBox(height: 12),
+            const Text(
+              'Open email and click the verification link. Then come back and press "I have verified".',
             ),
-            const SizedBox(width: 12),
-            ElevatedButton(
-              onPressed: _busy ? null : _checkVerifiedAndProceed,
-              child: const Text("I've verified"),
+            const SizedBox(height: 12),
+            if (_status != null)
+              Text(_status!, style: const TextStyle(color: Colors.green)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: _busy ? null : _resend,
+                  child:
+                      _busy
+                          ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(),
+                          )
+                          : const Text('Resend'),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: _busy ? null : _checkVerifiedAndProceed,
+                  child: const Text("I've verified"),
+                ),
+                const SizedBox(width: 12),
+                TextButton(
+                  onPressed: _busy ? null : _cancelAndDeleteAccount,
+                  child: const Text(
+                    'Cancel & delete account',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            TextButton(
-              onPressed: _busy ? null : _cancelAndDeleteAccount,
-              child: const Text('Cancel & delete account',
-                  style: TextStyle(color: Colors.red)),
-            ),
-          ])
-        ]),
+          ],
+        ),
       ),
     );
   }

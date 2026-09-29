@@ -378,10 +378,48 @@ class _PreferencesPageState extends State<PreferencesPage> {
     final roomFinderDoc = FirebaseFirestore.instance
         .collection('roomFinders')
         .doc(widget.uid);
+    const publicMatchFields = [
+      'behavior',
+      'socialBehavior',
+      'interests',
+      'hobbies',
+      'languages',
+      'smoking',
+      'drinking',
+      'pets',
+      'workShift',
+      'shareBathroom',
+      'cleanliness',
+      'socialLevel',
+      'slangUsage',
+      'foodType',
+      'studyTime',
+      'fanPreference',
+      'acPreference',
+      'floorPreference',
+      'pgDuration',
+      'pgDurationUnit',
+      'occupationCategory',
+      'budgetMin',
+      'budgetMax',
+      'sleepTime',
+      'wakeTime',
+      'preferencesGiven',
+      'updatedAt',
+    ];
+    final publicMatchData = <String, dynamic>{
+      'createdBy': widget.uid,
+      for (final field in publicMatchFields)
+        if (prefsData.containsKey(field)) field: prefsData[field],
+    };
+    final publicMatchDoc = FirebaseFirestore.instance
+        .collection('roomFinderProfiles')
+        .doc(widget.uid);
     final userDoc = FirebaseFirestore.instance
         .collection('users')
         .doc(widget.uid);
     batch.set(roomFinderDoc, prefsData, SetOptions(merge: true));
+    batch.set(publicMatchDoc, publicMatchData, SetOptions(merge: true));
     batch.set(userDoc, {
       'preferencesGiven': prefsData['preferencesGiven'] ?? false,
     }, SetOptions(merge: true));
@@ -511,17 +549,40 @@ class _PreferencesPageState extends State<PreferencesPage> {
                         _buildPreferenceTile('Interests', _selectedInterests),
                         _buildPreferenceTile('Hobbies', _selectedHobbies),
                         _buildPreferenceTile('Work Shift', _workShift),
-                        _buildPreferenceTile('Bathroom Sharing',_shareBathroom == null ? null : (_shareBathroom! ? 'Yes' : 'No'),),
+                        _buildPreferenceTile(
+                          'Bathroom Sharing',
+                          _shareBathroom == null
+                              ? null
+                              : (_shareBathroom! ? 'Yes' : 'No'),
+                        ),
                         _buildPreferenceTile('Food Preferences', _foodType),
                         _buildPreferenceTile('Study Time', _studyTime),
                         _buildPreferenceTile('Fan Preference', _fanPreference),
                         _buildPreferenceTile('AC Preference', _acPreference),
-                        _buildPreferenceTile('Floor Preference',_floorPreference),
-                        _buildPreferenceTile('PG Duration', _pgDuration?.toString(),),
-                        _buildPreferenceTile('PG Duration Unit', _pgDurationUnit,),
-                        _buildPreferenceTile('Occupation Category', _occupationCategory,),
-                        _buildPreferenceTile('Occupation Detail', _occupationDetail,),
-                        _buildPreferenceTile('Physical Condition',_physicalCondition,),
+                        _buildPreferenceTile(
+                          'Floor Preference',
+                          _floorPreference,
+                        ),
+                        _buildPreferenceTile(
+                          'PG Duration',
+                          _pgDuration?.toString(),
+                        ),
+                        _buildPreferenceTile(
+                          'PG Duration Unit',
+                          _pgDurationUnit,
+                        ),
+                        _buildPreferenceTile(
+                          'Occupation Category',
+                          _occupationCategory,
+                        ),
+                        _buildPreferenceTile(
+                          'Occupation Detail',
+                          _occupationDetail,
+                        ),
+                        _buildPreferenceTile(
+                          'Physical Condition',
+                          _physicalCondition,
+                        ),
                         _buildPreferenceTile('Allergies', _selectedAllergies),
                         _buildPreferenceTile('Diseases', _selectedDiseases),
                         _buildPreferenceTile('Languages', _selectedLanguages),

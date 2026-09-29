@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:romy/Helpers/private_storage_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -29,7 +30,7 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
   final _instagramController = TextEditingController();
 
   File? _pickedImage;
-  String? _existingImageUrl;
+  String? _existingImagePath;
   bool _isLoading = false;
   bool _isEditing = false;
 
@@ -52,7 +53,7 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
           _panController.text = data["panNumber"] ?? "";
           _whatsappController.text = data["whatsapp"] ?? "";
           _instagramController.text = data["instagram"] ?? "";
-          _existingImageUrl = data["addressProofUrl"];
+          _existingImagePath = data["addressProofPath"];
         });
         return; // Skip Firestore read
       }
@@ -74,7 +75,7 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
           _panController.text = data["panNumber"] ?? "";
           _whatsappController.text = data["whatsapp"] ?? "";
           _instagramController.text = data["instagram"] ?? "";
-          _existingImageUrl = data["addressProofUrl"];
+          _existingImagePath = data["addressProofPath"];
         });
       }
     } catch (e) {
@@ -97,7 +98,7 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
     if (picked != null) {
       setState(() {
         _pickedImage = File(picked.path);
-        _existingImageUrl = null;
+        _existingImagePath = null;
       });
     }
   }
@@ -114,15 +115,12 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
 
       if (compressed == null) return null;
 
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child("room_owner_verifications")
-          .child(
-            "${widget.user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg",
-          );
+      final path =
+          "room_owner_verifications/${widget.user.uid}/${DateTime.now().millisecondsSinceEpoch}.jpg";
+      final ref = FirebaseStorage.instance.ref(path);
 
-      final uploadTask = await ref.putData(compressed);
-      return await uploadTask.ref.getDownloadURL();
+      await ref.putData(compressed);
+      return path;
     } catch (e) {
       debugPrint("Upload Error: $e");
       return null;
@@ -133,7 +131,7 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
   Future<void> _submitVerification() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_pickedImage == null && _existingImageUrl == null) {
+    if (_pickedImage == null && _existingImagePath == null) {
       AppNotifier.show(
         context,
         message: "upload_address_proof".tr(),
@@ -145,10 +143,10 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
     setState(() => _isLoading = true);
 
     try {
-      String? imageUrl = _existingImageUrl;
+      String? imagePath = _existingImagePath;
 
       if (_pickedImage != null) {
-        imageUrl = await _uploadImage(_pickedImage!);
+        imagePath = await _uploadImage(_pickedImage!);
       }
 
       await FirebaseFirestore.instance
@@ -161,7 +159,7 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
             "panNumber": _panController.text.trim(),
             "whatsapp": _whatsappController.text.trim(),
             "instagram": _instagramController.text.trim(),
-            "addressProofUrl": imageUrl ?? "",
+            "addressProofPath": imagePath ?? "",
             "submittedAt": FieldValue.serverTimestamp(),
             "adminCheck": "pending",
             "adminVerified": false,
@@ -175,7 +173,7 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
         "panNumber": _panController.text.trim(),
         "whatsapp": _whatsappController.text.trim(),
         "instagram": _instagramController.text.trim(),
-        "addressProofUrl": imageUrl ?? "",
+        "addressProofPath": imagePath ?? "",
         "adminCheck": "pending",
         "adminVerified": false,
       };
@@ -324,33 +322,25 @@ class _RoomOwnerVerificationPageState extends State<RoomOwnerVerificationPage> {
                         child: Text(
                           _pickedImage != null
                               ? "image_selected".tr()
-                              : _existingImageUrl != null
+                              : _existingImagePath != null
                               ? "old_image_attached".tr()
                               : "upload_address_proof".tr(),
                         ),
                       ),
-                      if (_pickedImage != null || _existingImageUrl != null)
+                      if (_pickedImage != null || _existingImagePath != null)
                         const Icon(Icons.check_circle, color: Colors.green),
-                      if (_existingImageUrl != null && _pickedImage == null)
+                      if (_existingImagePath != null && _pickedImage == null)
                         IconButton(
                           icon: const Icon(
                             Icons.remove_red_eye,
                             color: Colors.blue,
                           ),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder:
-                                  (_) => Dialog(
-                                    child: InteractiveViewer(
-                                      child: Image.network(
-                                        _existingImageUrl!,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                  ),
-                            );
-                          },
+                          onPressed:
+                              () => showPrivateStorageImageDialog(
+                                context,
+                                _existingImagePath!,
+                                "Address Proof",
+                              ),
                         ),
                     ],
                   ),

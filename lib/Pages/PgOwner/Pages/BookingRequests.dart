@@ -5,13 +5,15 @@ final _firestore = FirebaseFirestore.instance;
 
 class BookingRequestsSection extends StatelessWidget {
   final String hostelId;
+  final String ownerUid;
   final bool isOwner;
   final Future<void> Function(String requestId, Map<String, dynamic> req)
-      onAction;
+  onAction;
 
   const BookingRequestsSection({
     super.key,
     required this.hostelId,
+    required this.ownerUid,
     required this.isOwner,
     required this.onAction,
   });
@@ -29,10 +31,12 @@ class BookingRequestsSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         StreamBuilder<QuerySnapshot>(
-          stream: _firestore
-              .collection('bookingRequests')
-              .where('hostelId', isEqualTo: hostelId)
-              .snapshots(),
+          stream:
+              _firestore
+                  .collection('bookingRequests')
+                  .where('hostelId', isEqualTo: hostelId)
+                  .where('ownerUid', isEqualTo: ownerUid)
+                  .snapshots(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) return const CircularProgressIndicator();
             final requests = snapshot.data!.docs;
@@ -44,33 +48,26 @@ class BookingRequestsSection extends StatelessWidget {
               separatorBuilder: (_, __) => const Divider(),
               itemBuilder: (context, index) {
                 final req = requests[index].data() as Map<String, dynamic>;
-                return FutureBuilder<DocumentSnapshot>(
-                  future:
-                      _firestore.collection('users').doc(req['userUid']).get(),
-                  builder: (context, userSnapshot) {
-                    if (!userSnapshot.hasData) return const SizedBox();
-                    final user =
-                        userSnapshot.data!.data() as Map<String, dynamic>?;
-
-                    return ListTile(
-                      title: Text(user?['displayName'] ?? req['userUid']),
-                      subtitle: Text(
-                        "Contact: ${user?['contactNumber'] ?? 'N/A'}\nFloor: ${req['floorId']}, Room: ${req['roomId']}, Cot: ${req['cotId']}",
-                      ),
-                      trailing: Text(
-                        (req['status'] ?? 'pending').toUpperCase(),
-                        style: TextStyle(
-                          color: req['status'] == 'pending'
+                return ListTile(
+                  title: Text(
+                    req['userName'] ?? req['userUid'] ?? 'Room seeker',
+                  ),
+                  subtitle: Text(
+                    "Contact: ${req['contactNumber'] ?? 'N/A'}\nFloor: ${req['floorId']}, Room: ${req['roomId']}, Cot: ${req['cotId']}",
+                  ),
+                  trailing: Text(
+                    (req['status'] ?? 'pending').toUpperCase(),
+                    style: TextStyle(
+                      color:
+                          req['status'] == 'pending'
                               ? Colors.orange
                               : req['status'] == 'approved'
-                                  ? Colors.green
-                                  : Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      onTap: () => onAction(requests[index].id, req),
-                    );
-                  },
+                              ? Colors.green
+                              : Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onTap: () => onAction(requests[index].id, req),
                 );
               },
             );
@@ -82,43 +79,44 @@ class BookingRequestsSection extends StatelessWidget {
 }
 
 Future<void> showBookingRequestActions(
-    BuildContext context,
-    String requestId,
-    Map<String, dynamic> req,
-  ) async {
+  BuildContext context,
+  String requestId,
+  Map<String, dynamic> req,
+) async {
   await showDialog(
     context: context,
-    builder: (_) => AlertDialog(
-      title: const Text("Manage Booking Request"),
-      content: Text(
-        "User ${req['userUid']} requested Floor ${req['floorId']}, Room ${req['roomId']}, Cot ${req['cotId']}",
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
+    builder:
+        (_) => AlertDialog(
+          title: const Text("Manage Booking Request"),
+          content: Text(
+            "User ${req['userUid']} requested Floor ${req['floorId']}, Room ${req['roomId']}, Cot ${req['cotId']}",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                await _firestore
+                    .collection('bookingRequests')
+                    .doc(requestId)
+                    .update({'status': 'approved'});
+                Navigator.pop(context);
+              },
+              child: const Text("Approve"),
+            ),
+            TextButton(
+              onPressed: () async {
+                await _firestore
+                    .collection('bookingRequests')
+                    .doc(requestId)
+                    .update({'status': 'rejected'});
+                Navigator.pop(context);
+              },
+              child: const Text("Reject"),
+            ),
+          ],
         ),
-        TextButton(
-          onPressed: () async {
-            await _firestore
-                .collection('bookingRequests')
-                .doc(requestId)
-                .update({'status': 'approved'});
-            Navigator.pop(context);
-          },
-          child: const Text("Approve"),
-        ),
-        TextButton(
-          onPressed: () async {
-            await _firestore
-                .collection('bookingRequests')
-                .doc(requestId)
-                .update({'status': 'rejected'});
-            Navigator.pop(context);
-          },
-          child: const Text("Reject"),
-        ),
-      ],
-    ),
   );
 }

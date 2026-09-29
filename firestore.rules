@@ -1,0 +1,207 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function verifiedUser() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isRoomOwner() {
+      return verifiedUser()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'roomOwner';
+    }
+
+    function ownsListing(listingId) {
+      return verifiedUser()
+        && get(/databases/$(database)/documents/listings/$(listingId)).data.ownerUid == request.auth.uid;
+    }
+
+    match /users/{uid} {
+      allow create: if verifiedUser()
+        && isSelf(uid)
+        && request.resource.data.keys().hasOnly([
+          'email', 'role', 'createdAt', 'deviceToken', 'displayName', 'profileComplete'
+        ])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role in ['user', 'roomOwner']
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.profileComplete == false;
+
+      allow get: if isSelf(uid) || isAdmin();
+      allow list: if isAdmin();
+      allow update: if isAdmin() || (
+        verifiedUser()
+        && isSelf(uid)
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'displayName', 'profileUrl', 'phone', 'email2', 'address', 'city', 'age',
+          'lat', 'lng', 'deviceToken', 'dob', 'gender', 'profileComplete',
+          'preferencesGiven', 'language', 'theme', 'updatedAt'
+        ])
+      );
+      allow delete: if isSelf(uid) || isAdmin();
+
+      match /saved/{listingId} {
+        allow read, write: if isSelf(uid) || isAdmin();
+      }
+    }
+
+    match /roomFinders/{uid} {
+      allow read, write: if isSelf(uid) || isAdmin();
+    }
+
+    match /roomFinderProfiles/{uid} {
+      allow read: if verifiedUser();
+      allow create, update: if verifiedUser()
+        && isSelf(uid)
+        && request.resource.data.createdBy == uid
+        && request.resource.data.keys().hasOnly([
+          'createdBy', 'displayName', 'behavior', 'socialBehavior', 'interests',
+          'hobbies', 'languages', 'smoking', 'drinking', 'pets', 'workShift',
+          'shareBathroom', 'cleanliness', 'socialLevel', 'slangUsage', 'foodType',
+          'studyTime', 'fanPreference', 'acPreference', 'floorPreference',
+          'pgDuration', 'pgDurationUnit', 'occupationCategory', 'budgetMin',
+          'budgetMax', 'sleepTime', 'wakeTime', 'preferencesGiven', 'updatedAt'
+        ]);
+      allow delete: if isSelf(uid) || isAdmin();
+    }
+
+    match /RoomOwners/{uid} {
+      allow get: if isSelf(uid) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if verifiedUser()
+        && isSelf(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.adminCheck == 'pending'
+        && request.resource.data.adminVerified == false
+        && request.resource.data.keys().hasOnly([
+          'uid', 'aadhaarNumber', 'aadhaarName', 'panNumber', 'whatsapp',
+          'instagram', 'addressProofPath', 'submittedAt', 'adminCheck',
+          'adminVerified', 'unverifiedReason'
+        ]);
+      allow update: if isAdmin() || (
+        verifiedUser()
+        && isSelf(uid)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.adminCheck == resource.data.adminCheck
+        && request.resource.data.adminVerified == resource.data.adminVerified
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'aadhaarNumber', 'aadhaarName', 'panNumber', 'whatsapp', 'instagram',
+          'addressProofPath', 'submittedAt'
+        ])
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /listings/{listingId} {
+      allow read: if true;
+      allow create: if isRoomOwner() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isAdmin() || (
+        isRoomOwner()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+      );
+      allow delete: if isAdmin() || (isRoomOwner() && resource.data.ownerUid == request.auth.uid);
+
+      match /ratings/{uid} {
+        allow read: if true;
+        allow create, update: if verifiedUser()
+          && isSelf(uid)
+          && request.resource.data.userId == uid
+          && request.resource.data.rating is number
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && request.resource.data.timestamp == request.time;
+        allow delete: if isSelf(uid) || isAdmin();
+      }
+    }
+
+    match /homes/{listingId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() || ownsListing(listingId);
+    }
+
+    match /hostels/{listingId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() || ownsListing(listingId);
+    }
+
+    match /bookingRequests/{requestId} {
+      allow create: if verifiedUser()
+        && request.resource.data.userUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.listingId is string
+        && get(/databases/$(database)/documents/listings/$(request.resource.data.listingId)).data.ownerUid == request.resource.data.ownerUid;
+      allow get, list: if isAdmin()
+        || (verifiedUser() && resource.data.userUid == request.auth.uid)
+        || (verifiedUser() && resource.data.ownerUid == request.auth.uid);
+      allow update: if isAdmin() || (
+        verifiedUser()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['approved', 'rejected']
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /campaigns/{campaignId} {
+      allow read: if isAdmin() || resource.data.active == true;
+      allow create: if isAdmin() || (
+        verifiedUser()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.active == false
+        && request.resource.data.keys().hasOnly([
+          'title', 'description', 'location', 'lat', 'lng', 'imageUrl',
+          'createdBy', 'createdByRole', 'createdAt', 'updatedAt', 'active'
+        ])
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    match /campaign_participants/{campaignId} {
+      allow read: if verifiedUser();
+      allow create: if verifiedUser()
+        && get(/databases/$(database)/documents/campaigns/$(campaignId)).data.active == true
+        && request.resource.data.keys().hasOnly([request.auth.uid])
+        && request.resource.data[request.auth.uid].userId == request.auth.uid;
+      allow update: if verifiedUser()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([request.auth.uid])
+        && (!request.resource.data.keys().hasAny([request.auth.uid])
+          || (get(/databases/$(database)/documents/campaigns/$(campaignId)).data.active == true
+            && request.resource.data[request.auth.uid].userId == request.auth.uid));
+      allow delete: if isAdmin();
+    }
+
+    match /profiles/{profileId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /app_images/{imageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /reports/{reportId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

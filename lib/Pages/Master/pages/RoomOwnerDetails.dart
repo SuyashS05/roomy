@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:romy/Helpers/private_storage_image.dart';
 
 class RoomOwnerDetailsPage extends StatelessWidget {
   final Map<String, dynamic> owner;
@@ -13,14 +14,7 @@ class RoomOwnerDetailsPage extends StatelessWidget {
 
   void _showDocument(BuildContext context, String url, String title) {
     if (url.isEmpty) return;
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        child: InteractiveViewer(
-          child: Image.network(url, fit: BoxFit.contain),
-        ),
-      ),
-    );
+    showPrivateStorageImageDialog(context, url, title);
   }
 
   @override
@@ -39,8 +33,9 @@ class RoomOwnerDetailsPage extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 40,
-                  backgroundImage: NetworkImage(user?["profileUrl"] ??
-                      "https://via.placeholder.com/150"),
+                  backgroundImage: NetworkImage(
+                    user?["profileUrl"] ?? "https://via.placeholder.com/150",
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -51,9 +46,10 @@ class RoomOwnerDetailsPage extends StatelessWidget {
                 ),
                 Chip(
                   label: Text(status.toUpperCase()),
-                  backgroundColor: status == "approved"
-                      ? Colors.green[100]
-                      : status == "rejected"
+                  backgroundColor:
+                      status == "approved"
+                          ? Colors.green[100]
+                          : status == "rejected"
                           ? Colors.red[100]
                           : Colors.orange[100],
                 ),
@@ -62,30 +58,42 @@ class RoomOwnerDetailsPage extends StatelessWidget {
             const SizedBox(height: 20),
 
             // User Info
-            Text("👤 User Info",
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              "👤 User Info",
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             _infoTile("Email", user?["email"]),
             _infoTile("Alt Email", user?["email2"]),
             _infoTile("Phone", user?["phone"]),
             _infoTile("Age", user?["age"]?.toString()),
-            _infoTile("DOB",
-                user?["dob"] != null ? (user!["dob"] as Timestamp).toDate().toString() : "N/A"),
+            _infoTile(
+              "DOB",
+              user?["dob"] != null
+                  ? (user!["dob"] as Timestamp).toDate().toString()
+                  : "N/A",
+            ),
             _infoTile("City", user?["city"]),
             _infoTile("Address", user?["address"]),
             const Divider(),
 
             // Verification Info
-            Text("📄 Verification Info",
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              "📄 Verification Info",
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             _infoTile("Aadhaar Name", owner["aadhaarName"]),
             _infoTile("Aadhaar Number", owner["aadhaarNumber"]),
             _infoTile("PAN Number", owner["panNumber"]),
             _infoTile("WhatsApp", owner["whatsapp"]),
             _infoTile("Instagram", owner["instagram"]),
-            _infoTile("Submitted At",
-                owner["submittedAt"] != null ? (owner["submittedAt"] as Timestamp).toDate().toString() : "N/A"),
+            _infoTile(
+              "Submitted At",
+              owner["submittedAt"] != null
+                  ? (owner["submittedAt"] as Timestamp).toDate().toString()
+                  : "N/A",
+            ),
             if ((owner["unverifiedReason"] ?? "").toString().isNotEmpty)
               _infoTile("Unverified Reason", owner["unverifiedReason"]),
             const SizedBox(height: 12),
@@ -95,12 +103,16 @@ class RoomOwnerDetailsPage extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                if ((owner["addressProofUrl"] ?? "").isNotEmpty)
+                if ((owner["addressProofPath"] ?? "").isNotEmpty)
                   ElevatedButton.icon(
                     icon: const Icon(Icons.remove_red_eye),
                     label: const Text("Address Proof"),
-                    onPressed: () => _showDocument(
-                        context, owner["addressProofUrl"], "Address Proof"),
+                    onPressed:
+                        () => _showDocument(
+                          context,
+                          owner["addressProofPath"],
+                          "Address Proof",
+                        ),
                   ),
               ],
             ),
@@ -116,11 +128,12 @@ class RoomOwnerDetailsPage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("$label: ",
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text("$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
           Expanded(
-            child: Text(value ?? "N/A",
-                style: const TextStyle(color: Colors.black87)),
+            child: Text(
+              value ?? "N/A",
+              style: const TextStyle(color: Colors.black87),
+            ),
           ),
         ],
       ),

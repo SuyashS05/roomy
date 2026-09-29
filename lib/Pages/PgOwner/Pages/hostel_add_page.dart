@@ -214,7 +214,7 @@ class _HostelAddPageState extends State<HostelAddPage> {
 
   Future<String> _uploadImage(File file) async {
     final ref = FirebaseStorage.instance.ref(
-      "hostels/${widget.editListingId ?? DateTime.now().millisecondsSinceEpoch}/${DateTime.now().millisecondsSinceEpoch}.jpg",
+      "listing_images/${widget.owner.uid}/${DateTime.now().millisecondsSinceEpoch}.jpg",
     );
     await ref.putFile(file);
     return await ref.getDownloadURL();
