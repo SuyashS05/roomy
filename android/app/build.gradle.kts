@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -7,6 +9,16 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.isFile) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+val mapsApiKey = providers.environmentVariable("MAPS_API_KEY")
+    .orElse(providers.gradleProperty("MAPS_API_KEY"))
+    .orElse(localProperties.getProperty("MAPS_API_KEY") ?: "")
+    .get()
 
 android {
     namespace = "com.skimgworld.romy"
@@ -34,7 +46,7 @@ android {
         
         manifestPlaceholders.putAll(
             mapOf(
-                "MAPS_API_KEY" to (project.findProperty("MAPS_API_KEY") ?: "")
+                "MAPS_API_KEY" to mapsApiKey
             )
         )
     }

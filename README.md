@@ -83,9 +83,13 @@ Roomie is a comprehensive platform designed to simplify the process of finding r
 
 4. Configure Google Maps API:
 
-   * Enable the Maps SDK for Android and iOS in your Google Cloud Console.
+   * Enable the Maps SDK for Android in Google Cloud and restrict its key to this Android package and signing certificate.
 
-   * Add your API key to the app's configuration files.
+   * Set `MAPS_API_KEY` in your shell or CI secret store, or add `MAPS_API_KEY=your-key` to the ignored `android/local.properties` file.
+
+   * For PowerShell, set `$env:MAPS_API_KEY = "your-key"` before running `flutter run`.
+
+   * Maps keys are included in the built app and cannot be kept secret there. Restrict the key to the required API and app identity, and rotate any key that was committed or exposed. Firebase client API keys are also public configuration; protect Firebase data with Security Rules and App Check rather than treating those keys as secrets.
 
 5. Run the app:
 
