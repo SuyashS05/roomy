@@ -32,6 +32,36 @@ Roomie is a comprehensive platform designed to simplify the process of finding r
 
 ---
 
+## User Flow
+
+```mermaid
+flowchart TD
+   A[Open Roomy] --> B{Verified session exists?}
+   B -- Yes --> G[Load stored Firestore role]
+   B -- No --> C[Login screen]
+   C --> D{Choose action}
+   D -- Sign in --> E[Enter email and password]
+   E --> F{Email verified?}
+   F -- Yes --> G
+   F -- No --> H[Resend verification email]
+   H --> I[Verify email, then sign in again]
+   I --> E
+   D -- Sign up --> J[Choose room seeker or room owner]
+   J --> K[Create Firebase Auth account]
+   K --> L[Send verification email]
+   L --> M[Verify email and tap I have verified]
+   M --> N[Create Firestore user profile]
+   N --> G
+   G --> O{Stored role}
+   O -- user --> P[Room seeker home]
+   O -- roomOwner --> Q[Room owner home]
+   O -- admin or master --> R[Admin home]
+```
+
+Admin and master accounts are not self-service signup options; provision them through a trusted process and assign the required Firebase Auth admin claim.
+
+---
+
 ## 🛠️ Tech Stack
 
 * **Frontend**: Flutter – for building natively compiled applications for mobile, web, and desktop from a single codebase.
